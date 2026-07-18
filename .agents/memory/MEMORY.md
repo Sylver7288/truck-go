@@ -1,0 +1,1 @@
+- [TruckGo platform architecture](truckgo-arch.md) — full-stack "Uber for trucks": web app + driver mobile app sharing one API + DB.

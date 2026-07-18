@@ -1,0 +1,102 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Toaster } from '@/components/ui/toaster';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import NotFound from '@/pages/not-found';
+import { Route, Switch, Router as WouterRouter, useLocation, Redirect } from 'wouter';
+import { Navbar } from '@/components/layout/navbar';
+
+// Customer pages
+import Home from '@/pages/customer/home';
+import Bookings from '@/pages/customer/bookings';
+import BookingDetail from '@/pages/customer/booking-detail';
+import Profile from '@/pages/customer/profile';
+import Login from '@/pages/login';
+import Register from '@/pages/register';
+import RegisterDriver from '@/pages/register-driver';
+
+// Driver pages
+import DriverDashboard from '@/pages/driver/dashboard';
+import DriverJobs from '@/pages/driver/jobs';
+import JobDetail from '@/pages/driver/job-detail';
+
+// Admin pages
+import AdminLogin from '@/pages/admin/login';
+import AdminDashboard from '@/pages/admin/dashboard';
+import AdminBookings from '@/pages/admin/bookings';
+import AdminDrivers from '@/pages/admin/drivers';
+import AdminCustomers from '@/pages/admin/customers';
+import { useAdminAuth } from '@/hooks/use-admin-auth';
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
+
+/** Redirects to /admin/login if not authenticated as admin */
+function AdminRoute({ component: Component }: { component: React.ComponentType }) {
+  const { isAuthenticated } = useAdminAuth();
+  if (!isAuthenticated) return <Redirect to="/admin/login" />;
+  return <Component />;
+}
+
+function Router() {
+  const [location] = useLocation();
+  const isAdminArea = location.startsWith('/admin');
+
+  return (
+    <div className="min-h-screen flex flex-col bg-background text-foreground">
+      {!isAdminArea && <Navbar />}
+      <main className={isAdminArea ? 'flex-1 flex flex-col' : 'flex-1'}>
+        <Switch>
+          {/* Customer & driver routes */}
+          <Route path="/" component={Home} />
+          <Route path="/login" component={Login} />
+          <Route path="/register" component={Register} />
+          <Route path="/register-driver" component={RegisterDriver} />
+          <Route path="/bookings" component={Bookings} />
+          <Route path="/bookings/:id" component={BookingDetail} />
+          <Route path="/profile" component={Profile} />
+          <Route path="/driver" component={DriverDashboard} />
+          <Route path="/driver/jobs" component={DriverJobs} />
+          <Route path="/driver/jobs/:id" component={JobDetail} />
+
+          {/* Admin routes */}
+          <Route path="/admin/login" component={AdminLogin} />
+          <Route path="/admin/bookings">
+            <AdminRoute component={AdminBookings} />
+          </Route>
+          <Route path="/admin/drivers">
+            <AdminRoute component={AdminDrivers} />
+          </Route>
+          <Route path="/admin/customers">
+            <AdminRoute component={AdminCustomers} />
+          </Route>
+          <Route path="/admin">
+            <AdminRoute component={AdminDashboard} />
+          </Route>
+
+          <Route component={NotFound} />
+        </Switch>
+      </main>
+    </div>
+  );
+}
+
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
+          <Router />
+        </WouterRouter>
+        <Toaster />
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+}
+
+export default App;

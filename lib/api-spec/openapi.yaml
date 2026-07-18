@@ -3,20 +3,32 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: TruckGo API - Uber-for-trucks platform
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Authentication operations
+  - name: truck-types
+    description: Truck/vehicle type catalog
+  - name: bookings
+    description: Customer booking operations
+  - name: drivers
+    description: Driver operations
+  - name: reviews
+    description: Rating and review operations
+  - name: estimates
+    description: Price estimation
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +36,540 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  # --- Auth ---
+  /auth/register/customer:
+    post:
+      operationId: registerCustomer
+      tags: [auth]
+      summary: Register a new customer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CustomerRegistrationInput"
+      responses:
+        "201":
+          description: Customer registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Validation error
+
+  /auth/register/driver:
+    post:
+      operationId: registerDriver
+      tags: [auth]
+      summary: Register a new driver
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DriverRegistrationInput"
+      responses:
+        "201":
+          description: Driver registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Validation error
+
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Login (customer or driver)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginInput"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Invalid credentials
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current user profile
+      parameters:
+        - in: query
+          name: userId
+          required: true
+          schema:
+            type: integer
+        - in: query
+          name: role
+          required: true
+          schema:
+            type: string
+            enum: [customer, driver]
+      responses:
+        "200":
+          description: Current user profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+
+  # --- Truck Types ---
+  /truck-types:
+    get:
+      operationId: listTruckTypes
+      tags: [truck-types]
+      summary: List all available truck types
+      responses:
+        "200":
+          description: List of truck types
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TruckType"
+
+  /truck-types/{id}:
+    get:
+      operationId: getTruckType
+      tags: [truck-types]
+      summary: Get a truck type by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Truck type details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TruckType"
+        "404":
+          description: Not found
+
+  # --- Price Estimates ---
+  /estimates:
+    post:
+      operationId: getPriceEstimate
+      tags: [estimates]
+      summary: Get a price estimate for a booking
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EstimateInput"
+      responses:
+        "200":
+          description: Price estimate
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EstimateResult"
+
+  # --- Bookings ---
+  /bookings:
+    get:
+      operationId: listBookings
+      tags: [bookings]
+      summary: List bookings for the current customer
+      parameters:
+        - in: query
+          name: customerId
+          required: true
+          schema:
+            type: integer
+        - in: query
+          name: status
+          required: false
+          schema:
+            type: string
+            enum: [pending, accepted, in_progress, completed, cancelled]
+      responses:
+        "200":
+          description: List of bookings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Booking"
+
+    post:
+      operationId: createBooking
+      tags: [bookings]
+      summary: Create a new booking
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BookingInput"
+      responses:
+        "201":
+          description: Booking created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+        "400":
+          description: Validation error
+
+  /bookings/summary:
+    get:
+      operationId: getBookingSummary
+      tags: [bookings]
+      summary: Get booking summary stats for a customer (dashboard)
+      parameters:
+        - in: query
+          name: customerId
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Booking statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BookingSummary"
+
+  /bookings/{id}:
+    get:
+      operationId: getBooking
+      tags: [bookings]
+      summary: Get a booking by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Booking details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+        "404":
+          description: Not found
+
+  /bookings/{id}/cancel:
+    patch:
+      operationId: cancelBooking
+      tags: [bookings]
+      summary: Cancel a booking
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Booking cancelled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+        "404":
+          description: Not found
+
+  # --- Drivers ---
+  /drivers/available:
+    get:
+      operationId: listAvailableDrivers
+      tags: [drivers]
+      summary: List nearby available drivers
+      parameters:
+        - in: query
+          name: truckTypeId
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Available drivers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Driver"
+
+  /drivers/{id}:
+    get:
+      operationId: getDriver
+      tags: [drivers]
+      summary: Get driver profile
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Driver profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Driver"
+        "404":
+          description: Not found
+
+  /drivers/{id}/status:
+    patch:
+      operationId: updateDriverStatus
+      tags: [drivers]
+      summary: Update driver availability status
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DriverStatusUpdate"
+      responses:
+        "200":
+          description: Status updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Driver"
+
+  /drivers/{id}/jobs:
+    get:
+      operationId: listDriverJobs
+      tags: [drivers]
+      summary: List all jobs (bookings) for a driver
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Driver's jobs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Booking"
+
+  /drivers/{id}/stats:
+    get:
+      operationId: getDriverStats
+      tags: [drivers]
+      summary: Get driver performance stats (earnings, trips, rating)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Driver stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DriverStats"
+
+  /bookings/{id}/accept:
+    patch:
+      operationId: acceptBooking
+      tags: [bookings]
+      summary: Driver accepts a booking
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AcceptBookingInput"
+      responses:
+        "200":
+          description: Booking accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+
+  /bookings/{id}/start:
+    patch:
+      operationId: startBooking
+      tags: [bookings]
+      summary: Driver marks pickup complete and trip started
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Trip started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+
+  /bookings/{id}/complete:
+    patch:
+      operationId: completeBooking
+      tags: [bookings]
+      summary: Driver marks delivery complete
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Booking completed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+
+  # --- Reviews ---
+  /reviews:
+    post:
+      operationId: createReview
+      tags: [reviews]
+      summary: Submit a review for a completed booking
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReviewInput"
+      responses:
+        "201":
+          description: Review submitted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Review"
+
+  # --- Admin ---
+  /admin/stats:
+    get:
+      operationId: getAdminStats
+      tags: [admin]
+      summary: Platform-wide statistics for admin dashboard
+      responses:
+        "200":
+          description: Admin statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminStats"
+
+  /admin/bookings:
+    get:
+      operationId: listAdminBookings
+      tags: [admin]
+      summary: List all bookings (admin, no customer filter)
+      parameters:
+        - in: query
+          name: status
+          required: false
+          schema:
+            type: string
+            enum: [pending, accepted, in_progress, completed, cancelled]
+      responses:
+        "200":
+          description: All bookings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Booking"
+
+  /admin/drivers:
+    get:
+      operationId: listAdminDrivers
+      tags: [admin]
+      summary: List all drivers (admin)
+      responses:
+        "200":
+          description: All drivers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Driver"
+
+  /admin/customers:
+    get:
+      operationId: listAdminCustomers
+      tags: [admin]
+      summary: List all customers with booking stats (admin)
+      responses:
+        "200":
+          description: All customers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AdminCustomer"
+
+  /reviews/driver/{driverId}:
+    get:
+      operationId: listDriverReviews
+      tags: [reviews]
+      summary: List reviews for a driver
+      parameters:
+        - in: path
+          name: driverId
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Driver reviews
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Review"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +580,379 @@ components:
       required:
         - status
 
+    # --- Auth ---
+    CustomerRegistrationInput:
+      type: object
+      required: [name, email, phone, password]
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        password:
+          type: string
+
+    DriverRegistrationInput:
+      type: object
+      required: [name, email, phone, password, licenseNumber, truckTypeId, vehiclePlate]
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        password:
+          type: string
+        licenseNumber:
+          type: string
+        truckTypeId:
+          type: integer
+        vehiclePlate:
+          type: string
+        vehicleYear:
+          type: ["integer", "null"]
+
+    LoginInput:
+      type: object
+      required: [email, password, role]
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+        role:
+          type: string
+          enum: [customer, driver]
+
+    AuthResponse:
+      type: object
+      required: [userId, role, name, email]
+      properties:
+        userId:
+          type: integer
+        role:
+          type: string
+          enum: [customer, driver]
+        name:
+          type: string
+        email:
+          type: string
+
+    UserProfile:
+      type: object
+      required: [id, name, email, phone, role]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        role:
+          type: string
+          enum: [customer, driver]
+        createdAt:
+          type: string
+          format: date-time
+
+    # --- Truck Types ---
+    TruckType:
+      type: object
+      required: [id, name, description, capacityKg, basePrice, pricePerKm]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        capacityKg:
+          type: number
+        basePrice:
+          type: number
+        pricePerKm:
+          type: number
+        imageUrl:
+          type: ["string", "null"]
+
+    # --- Estimates ---
+    EstimateInput:
+      type: object
+      required: [truckTypeId, pickupAddress, dropoffAddress, distanceKm]
+      properties:
+        truckTypeId:
+          type: integer
+        pickupAddress:
+          type: string
+        dropoffAddress:
+          type: string
+        distanceKm:
+          type: number
+
+    EstimateResult:
+      type: object
+      required: [truckTypeId, distanceKm, basePrice, pricePerKm, estimatedTotal, estimatedMinutes]
+      properties:
+        truckTypeId:
+          type: integer
+        distanceKm:
+          type: number
+        basePrice:
+          type: number
+        pricePerKm:
+          type: number
+        estimatedTotal:
+          type: number
+        estimatedMinutes:
+          type: integer
+
+    # --- Bookings ---
+    BookingInput:
+      type: object
+      required: [customerId, truckTypeId, pickupAddress, dropoffAddress, distanceKm, estimatedPrice, goodsDescription]
+      properties:
+        customerId:
+          type: integer
+        truckTypeId:
+          type: integer
+        pickupAddress:
+          type: string
+        dropoffAddress:
+          type: string
+        distanceKm:
+          type: number
+        estimatedPrice:
+          type: number
+        goodsDescription:
+          type: string
+        notes:
+          type: ["string", "null"]
+        scheduledAt:
+          type: ["string", "null"]
+          format: date-time
+
+    Booking:
+      type: object
+      required: [id, customerId, truckTypeId, pickupAddress, dropoffAddress, distanceKm, estimatedPrice, status, goodsDescription, createdAt]
+      properties:
+        id:
+          type: integer
+        customerId:
+          type: integer
+        customerName:
+          type: ["string", "null"]
+        driverId:
+          type: ["integer", "null"]
+        driverName:
+          type: ["string", "null"]
+        driverPhone:
+          type: ["string", "null"]
+        truckTypeId:
+          type: integer
+        truckTypeName:
+          type: ["string", "null"]
+        pickupAddress:
+          type: string
+        dropoffAddress:
+          type: string
+        distanceKm:
+          type: number
+        estimatedPrice:
+          type: number
+        finalPrice:
+          type: ["number", "null"]
+        status:
+          type: string
+          enum: [pending, accepted, in_progress, completed, cancelled]
+        goodsDescription:
+          type: string
+        notes:
+          type: ["string", "null"]
+        scheduledAt:
+          type: ["string", "null"]
+          format: date-time
+        startedAt:
+          type: ["string", "null"]
+          format: date-time
+        completedAt:
+          type: ["string", "null"]
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+
+    BookingSummary:
+      type: object
+      required: [total, pending, active, completed, cancelled, totalSpent]
+      properties:
+        total:
+          type: integer
+        pending:
+          type: integer
+        active:
+          type: integer
+        completed:
+          type: integer
+        cancelled:
+          type: integer
+        totalSpent:
+          type: number
+
+    AcceptBookingInput:
+      type: object
+      required: [driverId]
+      properties:
+        driverId:
+          type: integer
+
+    # --- Drivers ---
+    Driver:
+      type: object
+      required: [id, name, phone, licenseNumber, vehiclePlate, truckTypeId, status, rating, totalTrips]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        phone:
+          type: string
+        licenseNumber:
+          type: string
+        vehiclePlate:
+          type: string
+        vehicleYear:
+          type: ["integer", "null"]
+        truckTypeId:
+          type: integer
+        truckTypeName:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [available, busy, offline]
+        rating:
+          type: number
+        totalTrips:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+    DriverStatusUpdate:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [available, busy, offline]
+
+    DriverStats:
+      type: object
+      required: [driverId, totalTrips, completedTrips, cancelledTrips, totalEarnings, rating, reviewCount]
+      properties:
+        driverId:
+          type: integer
+        totalTrips:
+          type: integer
+        completedTrips:
+          type: integer
+        cancelledTrips:
+          type: integer
+        totalEarnings:
+          type: number
+        rating:
+          type: number
+        reviewCount:
+          type: integer
+
+    # --- Reviews ---
+    ReviewInput:
+      type: object
+      required: [bookingId, customerId, driverId, rating]
+      properties:
+        bookingId:
+          type: integer
+        customerId:
+          type: integer
+        driverId:
+          type: integer
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        comment:
+          type: ["string", "null"]
+
+    Review:
+      type: object
+      required: [id, bookingId, customerId, driverId, rating, createdAt]
+      properties:
+        id:
+          type: integer
+        bookingId:
+          type: integer
+        customerId:
+          type: integer
+        customerName:
+          type: ["string", "null"]
+        driverId:
+          type: integer
+        rating:
+          type: integer
+        comment:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+
+    # --- Admin ---
+    AdminStats:
+      type: object
+      required: [totalBookings, pendingBookings, activeBookings, completedBookings, cancelledBookings, totalRevenue, totalDrivers, availableDrivers, busyDrivers, offlineDrivers, totalCustomers]
+      properties:
+        totalBookings:
+          type: integer
+        pendingBookings:
+          type: integer
+        activeBookings:
+          type: integer
+        completedBookings:
+          type: integer
+        cancelledBookings:
+          type: integer
+        totalRevenue:
+          type: number
+        totalDrivers:
+          type: integer
+        availableDrivers:
+          type: integer
+        busyDrivers:
+          type: integer
+        offlineDrivers:
+          type: integer
+        totalCustomers:
+          type: integer
+
+    AdminCustomer:
+      type: object
+      required: [id, name, email, phone, createdAt, totalBookings, totalSpent]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        totalBookings:
+          type: integer
+        totalSpent:
+          type: number

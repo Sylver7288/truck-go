@@ -1,0 +1,27 @@
+kind = "web"
+previewPath = "/"
+title = "TruckGo - Customer Web App"
+version = "1.0.0"
+id = "artifacts/truckgo-web"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 25908
+
+[services.development]
+run = "pnpm --filter @workspace/truckgo-web run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/truckgo-web", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/truckgo-web/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "25908"
+BASE_PATH = "/"
