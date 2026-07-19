@@ -54,7 +54,7 @@ export function Navbar() {
             )}
           </Link>
 
-          {/* Nav links — desktop */}
+          {/* Nav links — desktop (role-specific) */}
           <nav className="hidden md:flex items-center gap-1 flex-1">
             {(user ? navItems : []).map((item) => {
               const isActive = item.href === "/" ? location === "/" : location.startsWith(item.href);
@@ -74,7 +74,7 @@ export function Navbar() {
                 </Link>
               );
             })}
-            {/* Public links always visible */}
+            {/* Public links — desktop */}
             {PUBLIC_NAV.map((item) => {
               const isActive = location.startsWith(item.href);
               return (
@@ -95,48 +95,70 @@ export function Navbar() {
             })}
           </nav>
 
+          {/* Public links — always visible on mobile */}
+          <nav className="flex md:hidden items-center gap-1">
+            {PUBLIC_NAV.map((item) => {
+              const isActive = location.startsWith(item.href);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    "flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all",
+                    isActive
+                      ? "text-primary bg-primary/10"
+                      : "text-white/55 hover:text-white hover:bg-white/6"
+                  )}
+                >
+                  <item.icon className="h-3.5 w-3.5" />
+                  {item.label}
+                </Link>
+              );
+            })}
+          </nav>
+
           {/* Right side */}
           <div className="flex items-center gap-2">
             {user ? (
               <>
                 <Link
                   href="/profile"
-                  className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-white/60 hover:text-white hover:bg-white/6 transition-all"
+                  className="hidden md:flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-white/60 hover:text-white hover:bg-white/6 transition-all"
                 >
                   <div className="h-6 w-6 rounded-full bg-primary/20 text-primary text-[10px] font-bold flex items-center justify-center ring-1 ring-primary/30">
                     {user.name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()}
                   </div>
                   <span className="hidden lg:inline">{user.name.split(" ")[0]}</span>
                 </Link>
-                <div className="w-px h-5 bg-white/10 hidden sm:block" />
+                <div className="w-px h-5 bg-white/10 hidden md:block" />
                 <button
                   onClick={handleLogout}
-                  className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-white/50 hover:text-red-400 hover:bg-red-500/10 transition-all"
+                  className="hidden md:flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-white/50 hover:text-red-400 hover:bg-red-500/10 transition-all"
                 >
                   <LogOut className="h-4 w-4" />
                   <span>Sign out</span>
-                </button>
-                {/* Mobile hamburger */}
-                <button
-                  onClick={() => setMobileOpen(!mobileOpen)}
-                  className="md:hidden p-2 rounded-lg text-white/60 hover:text-white hover:bg-white/6 transition-all"
-                >
-                  {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
                 </button>
               </>
             ) : (
               <>
                 <Link
                   href="/login"
-                  className="px-4 py-2 text-sm font-medium text-white/60 hover:text-white rounded-lg hover:bg-white/6 transition-all"
+                  className="hidden md:block px-4 py-2 text-sm font-medium text-white/60 hover:text-white rounded-lg hover:bg-white/6 transition-all"
                 >
                   Log in
                 </Link>
-                <Button asChild size="sm" className="font-semibold shadow-lg shadow-primary/30 btn-glow transition-all">
+                <Button asChild size="sm" className="hidden md:inline-flex font-semibold shadow-lg shadow-primary/30 btn-glow transition-all">
                   <Link href="/register">Get started</Link>
                 </Button>
               </>
             )}
+            {/* Hamburger — always visible on mobile */}
+            <button
+              onClick={() => setMobileOpen(!mobileOpen)}
+              className="md:hidden p-2 rounded-lg text-white/60 hover:text-white hover:bg-white/6 transition-all"
+            >
+              {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
           </div>
         </div>
       </div>
@@ -176,7 +198,7 @@ export function Navbar() {
               {item.label}
             </Link>
           ))}
-          {user && (
+          {user ? (
             <>
               <Link href="/profile" onClick={() => setMobileOpen(false)} className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium text-white/70 hover:text-white hover:bg-white/6 transition-all">
                 <User className="h-4 w-4" /> Profile
@@ -185,6 +207,17 @@ export function Navbar() {
                 <LogOut className="h-4 w-4" /> Sign out
               </button>
             </>
+          ) : (
+            <div className="pt-2 flex flex-col gap-2 border-t border-white/8 mt-1">
+              <Link href="/login" onClick={() => setMobileOpen(false)}
+                className="flex items-center justify-center h-10 rounded-lg border border-white/12 text-sm font-semibold text-white/70 hover:text-white hover:bg-white/6 transition-all">
+                Log in
+              </Link>
+              <Link href="/register" onClick={() => setMobileOpen(false)}
+                className="flex items-center justify-center h-10 rounded-lg bg-primary text-sm font-semibold text-white shadow-lg shadow-primary/25 btn-glow transition-all">
+                Get started
+              </Link>
+            </div>
           )}
         </div>
       )}
