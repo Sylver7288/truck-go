@@ -1,85 +1,114 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
-import { Truck, LogOut, User, ClipboardList, LayoutDashboard } from "lucide-react";
+import { Truck, LogOut, ClipboardList, LayoutDashboard, User, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useHealthCheck } from "@workspace/api-client-react";
+import { cn } from "@/lib/utils";
+
+const CUSTOMER_NAV = [
+  { href: "/", label: "Book a Truck" },
+  { href: "/bookings", label: "My Bookings", icon: ClipboardList },
+];
+
+const DRIVER_NAV = [
+  { href: "/driver", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/driver/jobs", label: "Jobs", icon: ClipboardList },
+];
 
 export function Navbar() {
   const { user, logout } = useAuth();
-  const [, setLocation] = useLocation();
-
-  // Used just to satisfy requirement that all hooks must be used.
-  const { data: health } = useHealthCheck();
+  const [location, setLocation] = useLocation();
 
   const handleLogout = () => {
     logout();
     setLocation("/login");
   };
 
-  return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link href={user?.role === "driver" ? "/driver" : "/"} className="flex items-center gap-2 font-bold text-xl text-primary tracking-tight">
-            <Truck className="h-6 w-6" />
-            <span>TruckGo</span>
-          </Link>
-          {health?.status === "ok" && (
-            <div className="hidden sm:flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-100">
-              <div className="h-2 w-2 rounded-full bg-emerald-500" />
-              <span className="text-[10px] font-medium text-emerald-700 uppercase tracking-wider">System Operational</span>
-            </div>
-          )}
-        </div>
+  const navItems = user?.role === "driver" ? DRIVER_NAV : user?.role === "customer" ? CUSTOMER_NAV : [];
 
-        {user ? (
-          <nav className="flex items-center gap-4 sm:gap-6">
-            {user.role === "customer" && (
+  return (
+    <header className="sticky top-0 z-50 w-full bg-white border-b border-slate-200">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="h-16 flex items-center justify-between gap-8">
+
+          {/* Logo */}
+          <Link
+            href={user?.role === "driver" ? "/driver" : "/"}
+            className="flex items-center gap-2.5 shrink-0"
+          >
+            <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center shadow-sm">
+              <Truck className="h-4 w-4 text-white" />
+            </div>
+            <span className="font-extrabold text-lg text-slate-900 tracking-tight">TruckGo</span>
+            {user?.role === "driver" && (
+              <span className="hidden sm:inline text-xs font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full border border-primary/20 ml-1">
+                Driver
+              </span>
+            )}
+          </Link>
+
+          {/* Nav links */}
+          {user && navItems.length > 0 && (
+            <nav className="hidden md:flex items-center gap-1 flex-1">
+              {navItems.map((item) => {
+                const isActive = item.href === "/" ? location === "/" : location.startsWith(item.href);
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={cn(
+                      "flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                      isActive
+                        ? "text-primary bg-primary/8 font-semibold"
+                        : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                    )}
+                  >
+                    {item.icon && <item.icon className="h-4 w-4" />}
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </nav>
+          )}
+
+          {/* Right side */}
+          <div className="flex items-center gap-2">
+            {user ? (
               <>
-                <Link href="/" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-                  Book Truck
+                <Link
+                  href="/profile"
+                  className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors"
+                >
+                  <div className="h-6 w-6 rounded-full bg-primary/10 text-primary text-[10px] font-bold flex items-center justify-center">
+                    {user.name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()}
+                  </div>
+                  <span className="hidden lg:inline">{user.name.split(" ")[0]}</span>
+                  <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
                 </Link>
-                <Link href="/bookings" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5">
-                  <ClipboardList className="h-4 w-4" />
-                  <span className="hidden sm:inline">My Bookings</span>
+                <div className="w-px h-5 bg-slate-200 hidden sm:block" />
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-slate-500 hover:text-red-600 hover:bg-red-50 transition-colors"
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span className="hidden sm:inline">Sign out</span>
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-50 transition-colors"
+                >
+                  Log in
                 </Link>
-                <Link href="/profile" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5">
-                  <User className="h-4 w-4" />
-                  <span className="hidden sm:inline">Profile</span>
-                </Link>
+                <Button asChild size="sm" className="font-semibold shadow-sm">
+                  <Link href="/register">Get started</Link>
+                </Button>
               </>
             )}
-            
-            {user.role === "driver" && (
-              <>
-                <Link href="/driver" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5">
-                  <LayoutDashboard className="h-4 w-4" />
-                  <span className="hidden sm:inline">Dashboard</span>
-                </Link>
-                <Link href="/driver/jobs" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5">
-                  <ClipboardList className="h-4 w-4" />
-                  <span className="hidden sm:inline">Jobs</span>
-                </Link>
-              </>
-            )}
-            
-            <div className="h-4 w-px bg-border mx-1"></div>
-            
-            <Button variant="ghost" size="sm" onClick={handleLogout} className="text-muted-foreground hover:text-destructive">
-              <LogOut className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">Sign Out</span>
-            </Button>
-          </nav>
-        ) : (
-          <nav className="flex items-center gap-4">
-            <Link href="/login" className="text-sm font-medium hover:text-primary transition-colors">
-              Log In
-            </Link>
-            <Button asChild size="sm">
-              <Link href="/register">Sign Up</Link>
-            </Button>
-          </nav>
-        )}
+          </div>
+
+        </div>
       </div>
     </header>
   );

@@ -36,7 +36,6 @@ const queryClient = new QueryClient({
   },
 });
 
-/** Redirects to /admin/login if not authenticated as admin */
 function AdminRoute({ component: Component }: { component: React.ComponentType }) {
   const { isAuthenticated } = useAdminAuth();
   if (!isAuthenticated) return <Redirect to="/admin/login" />;
@@ -47,12 +46,24 @@ function Router() {
   const [location] = useLocation();
   const isAdminArea = location.startsWith('/admin');
 
+  if (isAdminArea) {
+    return (
+      <Switch>
+        <Route path="/admin/login" component={AdminLogin} />
+        <Route path="/admin/bookings"><AdminRoute component={AdminBookings} /></Route>
+        <Route path="/admin/drivers"><AdminRoute component={AdminDrivers} /></Route>
+        <Route path="/admin/customers"><AdminRoute component={AdminCustomers} /></Route>
+        <Route path="/admin"><AdminRoute component={AdminDashboard} /></Route>
+        <Route component={NotFound} />
+      </Switch>
+    );
+  }
+
   return (
-    <div className="min-h-screen flex flex-col bg-background text-foreground">
-      {!isAdminArea && <Navbar />}
-      <main className={isAdminArea ? 'flex-1 flex flex-col' : 'flex-1'}>
+    <div className="bg-background text-foreground">
+      <Navbar />
+      <main>
         <Switch>
-          {/* Customer & driver routes */}
           <Route path="/" component={Home} />
           <Route path="/login" component={Login} />
           <Route path="/register" component={Register} />
@@ -63,22 +74,6 @@ function Router() {
           <Route path="/driver" component={DriverDashboard} />
           <Route path="/driver/jobs" component={DriverJobs} />
           <Route path="/driver/jobs/:id" component={JobDetail} />
-
-          {/* Admin routes */}
-          <Route path="/admin/login" component={AdminLogin} />
-          <Route path="/admin/bookings">
-            <AdminRoute component={AdminBookings} />
-          </Route>
-          <Route path="/admin/drivers">
-            <AdminRoute component={AdminDrivers} />
-          </Route>
-          <Route path="/admin/customers">
-            <AdminRoute component={AdminCustomers} />
-          </Route>
-          <Route path="/admin">
-            <AdminRoute component={AdminDashboard} />
-          </Route>
-
           <Route component={NotFound} />
         </Switch>
       </main>
