@@ -195,7 +195,53 @@ export interface Driver {
   status: DriverStatus;
   rating: number;
   totalTrips: number;
+  /** @nullable */
+  currentLat?: number | null;
+  /** @nullable */
+  currentLng?: number | null;
+  /** @nullable */
+  lastLocationAt?: string | null;
   createdAt?: string;
+}
+
+export interface DriverLocationUpdate {
+  lat: number;
+  lng: number;
+}
+
+export interface DriverLocation {
+  driverId: number;
+  lat: number;
+  lng: number;
+  updatedAt: string;
+}
+
+export type TrackingInfoStatus = typeof TrackingInfoStatus[keyof typeof TrackingInfoStatus];
+
+
+export const TrackingInfoStatus = {
+  pending: 'pending',
+  accepted: 'accepted',
+  in_progress: 'in_progress',
+  completed: 'completed',
+  cancelled: 'cancelled',
+} as const;
+
+export interface TrackingInfo {
+  bookingId: number;
+  status: TrackingInfoStatus;
+  /** @nullable */
+  driverId?: number | null;
+  /** @nullable */
+  driverName?: string | null;
+  /** @nullable */
+  driverPhone?: string | null;
+  /** @nullable */
+  driverLat?: number | null;
+  /** @nullable */
+  driverLng?: number | null;
+  /** @nullable */
+  lastLocationAt?: string | null;
 }
 
 export type DriverStatusUpdateStatus = typeof DriverStatusUpdateStatus[keyof typeof DriverStatusUpdateStatus];

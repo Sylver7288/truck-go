@@ -21,5 +21,11 @@ export interface Driver {
   status: DriverStatus;
   rating: number;
   totalTrips: number;
+  /** @nullable */
+  currentLat?: number | null;
+  /** @nullable */
+  currentLng?: number | null;
+  /** @nullable */
+  lastLocationAt?: Date | null;
   createdAt?: Date;
 }

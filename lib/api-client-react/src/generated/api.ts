@@ -29,6 +29,8 @@ import type {
   BookingSummary,
   CustomerRegistrationInput,
   Driver,
+  DriverLocation,
+  DriverLocationUpdate,
   DriverRegistrationInput,
   DriverStats,
   DriverStatusUpdate,
@@ -43,6 +45,7 @@ import type {
   LoginInput,
   Review,
   ReviewInput,
+  TrackingInfo,
   TruckType,
   UserProfile
 } from './api.schemas';
@@ -1435,6 +1438,155 @@ export function useGetDriverStats<TData = Awaited<ReturnType<typeof getDriverSta
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetDriverStatsQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getUpdateDriverLocationUrl = (id: number,) => {
+
+
+
+
+  return `/api/drivers/${id}/location`
+}
+
+/**
+ * @summary Update driver's current GPS location (called by driver app)
+ */
+export const updateDriverLocation = async (id: number,
+    driverLocationUpdate: DriverLocationUpdate, options?: RequestInit): Promise<DriverLocation> => {
+
+  return customFetch<DriverLocation>(getUpdateDriverLocationUrl(id),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(driverLocationUpdate)
+  }
+);}
+
+
+
+
+
+export const getUpdateDriverLocationMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateDriverLocation>>, TError,{id: number;data: BodyType<DriverLocationUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateDriverLocation>>, TError,{id: number;data: BodyType<DriverLocationUpdate>}, TContext> => {
+
+const mutationKey = ['updateDriverLocation'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateDriverLocation>>, {id: number;data: BodyType<DriverLocationUpdate>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateDriverLocation(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateDriverLocationMutationResult = NonNullable<Awaited<ReturnType<typeof updateDriverLocation>>>
+    export type UpdateDriverLocationMutationBody = BodyType<DriverLocationUpdate>
+    export type UpdateDriverLocationMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Update driver's current GPS location (called by driver app)
+ */
+export const useUpdateDriverLocation = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateDriverLocation>>, TError,{id: number;data: BodyType<DriverLocationUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateDriverLocation>>,
+        TError,
+        {id: number;data: BodyType<DriverLocationUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateDriverLocationMutationOptions(options));
+    }
+
+export const getGetBookingTrackingUrl = (id: number,) => {
+
+
+
+
+  return `/api/bookings/${id}/tracking`
+}
+
+/**
+ * @summary Get real-time tracking info for an active booking
+ */
+export const getBookingTracking = async (id: number, options?: RequestInit): Promise<TrackingInfo> => {
+
+  return customFetch<TrackingInfo>(getGetBookingTrackingUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetBookingTrackingQueryKey = (id: number,) => {
+    return [
+    `/api/bookings/${id}/tracking`
+    ] as const;
+    }
+
+
+export const getGetBookingTrackingQueryOptions = <TData = Awaited<ReturnType<typeof getBookingTracking>>, TError = ErrorType<void>>(id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getBookingTracking>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetBookingTrackingQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getBookingTracking>>> = ({ signal }) => getBookingTracking(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getBookingTracking>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetBookingTrackingQueryResult = NonNullable<Awaited<ReturnType<typeof getBookingTracking>>>
+export type GetBookingTrackingQueryError = ErrorType<void>
+
+
+/**
+ * @summary Get real-time tracking info for an active booking
+ */
+
+export function useGetBookingTracking<TData = Awaited<ReturnType<typeof getBookingTracking>>, TError = ErrorType<void>>(
+ id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getBookingTracking>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetBookingTrackingQueryOptions(id,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

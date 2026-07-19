@@ -5,6 +5,7 @@ import {
   useStartBooking,
   useCompleteBooking,
   useCancelBooking,
+  useUpdateDriverLocation,
   getListDriverJobsQueryKey,
   getGetBookingQueryKey,
 } from '@workspace/api-client-react';
@@ -13,8 +14,9 @@ import { useAuth } from '@/context/AuthContext';
 import { useColors } from '@/hooks/useColors';
 import { useQueryClient } from '@tanstack/react-query';
 import * as Haptics from 'expo-haptics';
+import * as Location from 'expo-location';
 import { router, useLocalSearchParams } from 'expo-router';
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -50,15 +52,60 @@ export default function JobDetailScreen() {
   const { driver } = useAuth();
   const qc = useQueryClient();
 
+  // GPS tracking subscription ref
+  const locationSub = useRef<Location.LocationSubscription | null>(null);
+
   const { data: booking, isLoading, isError } = useGetBooking(bookingId, {
     query: { enabled: bookingId > 0 },
   });
+
+  const updateLocation = useUpdateDriverLocation();
 
   const invalidate = () => {
     qc.invalidateQueries({ queryKey: getGetBookingQueryKey(bookingId) });
     if (driver?.userId) qc.invalidateQueries({ queryKey: getListDriverJobsQueryKey(driver.userId) });
   };
 
+  // ── GPS tracking: start when in_progress, stop otherwise ─────────────────
+  useEffect(() => {
+    const status = booking?.status as BookingStatus | undefined;
+
+    if (status === 'in_progress' && driver?.userId) {
+      (async () => {
+        const { status: permStatus } = await Location.requestForegroundPermissionsAsync();
+        if (permStatus !== 'granted') return;
+
+        // Remove any existing subscription first
+        locationSub.current?.remove();
+
+        locationSub.current = await Location.watchPositionAsync(
+          {
+            accuracy: Location.Accuracy.High,
+            timeInterval: 8000,   // every 8 seconds
+            distanceInterval: 10, // or every 10 metres, whichever first
+          },
+          (loc) => {
+            updateLocation.mutate({
+              id: driver.userId,
+              data: { lat: loc.coords.latitude, lng: loc.coords.longitude },
+            });
+          }
+        );
+      })();
+    } else {
+      // Stop tracking when not in_progress
+      locationSub.current?.remove();
+      locationSub.current = null;
+    }
+
+    return () => {
+      locationSub.current?.remove();
+      locationSub.current = null;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [booking?.status, driver?.userId]);
+
+  // ── Booking action mutations ───────────────────────────────────────────────
   const acceptMutation = useAcceptBooking({
     mutation: {
       onSuccess: () => { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); invalidate(); },
@@ -97,10 +144,7 @@ export default function JobDetailScreen() {
   const handleComplete = () => {
     Alert.alert('Complete Delivery', 'Confirm that the delivery has been completed?', [
       { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Complete', style: 'default',
-        onPress: () => completeMutation.mutate({ id: bookingId }),
-      },
+      { text: 'Complete', style: 'default', onPress: () => completeMutation.mutate({ id: bookingId }) },
     ]);
   };
 
@@ -116,6 +160,14 @@ export default function JobDetailScreen() {
         <Text style={[styles.topBarTitle, { color: colors.foreground }]}>Job #{bookingId}</Text>
         {status && <StatusBadge status={status} />}
       </View>
+
+      {/* GPS indicator badge when tracking */}
+      {status === 'in_progress' && (
+        <View style={[styles.gpsBadge, { backgroundColor: 'rgba(34,197,94,0.12)', borderColor: 'rgba(34,197,94,0.3)' }]}>
+          <View style={styles.gpsDot} />
+          <Text style={styles.gpsText}>Sharing live location</Text>
+        </View>
+      )}
 
       {isLoading ? (
         <ActivityIndicator color={colors.primary} style={{ marginTop: 60 }} />
@@ -138,21 +190,21 @@ export default function JobDetailScreen() {
 
             <View style={styles.routeItem}>
               <View style={styles.routeIconCol}>
-                <View style={[styles.routeDot, { backgroundColor: colors.primary }]} />
+                <View style={[styles.routeDot, { backgroundColor: '#22c55e' }]} />
                 <View style={[styles.routeConnector, { backgroundColor: colors.border }]} />
               </View>
               <View style={styles.routeText}>
-                <Text style={[styles.routeLabel, { color: colors.mutedForeground }]}>Pickup</Text>
+                <Text style={[styles.routeLabel, { color: '#22c55e' }]}>Pickup</Text>
                 <Text style={[styles.routeAddr, { color: colors.foreground }]}>{booking.pickupAddress}</Text>
               </View>
             </View>
 
             <View style={styles.routeItem}>
               <View style={styles.routeIconCol}>
-                <View style={[styles.routeDot, { backgroundColor: colors.foreground }]} />
+                <View style={[styles.routeDot, { backgroundColor: '#ef4444' }]} />
               </View>
               <View style={styles.routeText}>
-                <Text style={[styles.routeLabel, { color: colors.mutedForeground }]}>Dropoff</Text>
+                <Text style={[styles.routeLabel, { color: '#ef4444' }]}>Dropoff</Text>
                 <Text style={[styles.routeAddr, { color: colors.foreground }]}>{booking.dropoffAddress}</Text>
               </View>
             </View>
@@ -208,7 +260,7 @@ export default function JobDetailScreen() {
               ) : (
                 <>
                   <Feather name="navigation" size={20} color="#FFF" />
-                  <Text style={styles.actionBtnText}>Start Trip</Text>
+                  <Text style={styles.actionBtnText}>Start Trip — Location Sharing Begins</Text>
                 </>
               )}
             </TouchableOpacity>
@@ -262,6 +314,22 @@ const styles = StyleSheet.create({
   },
   backBtn: { marginRight: 4 },
   topBarTitle: { fontSize: 17, fontWeight: '700' as const, flex: 1 },
+  gpsBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+  },
+  gpsDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#22c55e',
+    // pulse animation not available in RN without Animated, but the color makes it obvious
+  },
+  gpsText: { fontSize: 12, fontWeight: '600' as const, color: '#22c55e' },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12 },
   errorText: { fontSize: 15, textAlign: 'center' },
   linkText: { fontSize: 15, fontWeight: '600' as const },
@@ -278,7 +346,7 @@ const styles = StyleSheet.create({
   routeDot: { width: 14, height: 14, borderRadius: 7, marginTop: 2 },
   routeConnector: { flex: 1, width: 2, marginVertical: 4 },
   routeText: { flex: 1, paddingBottom: 16 },
-  routeLabel: { fontSize: 11, fontWeight: '600' as const, letterSpacing: 0.5, marginBottom: 2 },
+  routeLabel: { fontSize: 11, fontWeight: '700' as const, letterSpacing: 0.8, marginBottom: 2 },
   routeAddr: { fontSize: 14, fontWeight: '500' as const, lineHeight: 20 },
   detailCard: {
     borderRadius: 16,

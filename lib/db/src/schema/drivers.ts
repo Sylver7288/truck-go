@@ -1,4 +1,4 @@
-import { pgTable, serial, text, integer, timestamp, numeric, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, integer, timestamp, numeric, pgEnum, doublePrecision } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { truckTypesTable } from "./truck-types";
@@ -18,6 +18,9 @@ export const driversTable = pgTable("drivers", {
   status: driverStatusEnum("status").notNull().default("offline"),
   rating: numeric("rating", { precision: 3, scale: 2 }).notNull().default("5.00"),
   totalTrips: integer("total_trips").notNull().default(0),
+  currentLat: doublePrecision("current_lat"),
+  currentLng: doublePrecision("current_lng"),
+  lastLocationAt: timestamp("last_location_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

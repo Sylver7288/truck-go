@@ -314,6 +314,9 @@ export const ListAvailableDriversResponseItem = zod.object({
   "status": zod.enum(['available', 'busy', 'offline']),
   "rating": zod.number(),
   "totalTrips": zod.number(),
+  "currentLat": zod.number().nullish(),
+  "currentLng": zod.number().nullish(),
+  "lastLocationAt": zod.coerce.date().nullish(),
   "createdAt": zod.coerce.date().optional()
 })
 export const ListAvailableDriversResponse = zod.array(ListAvailableDriversResponseItem)
@@ -338,6 +341,9 @@ export const GetDriverResponse = zod.object({
   "status": zod.enum(['available', 'busy', 'offline']),
   "rating": zod.number(),
   "totalTrips": zod.number(),
+  "currentLat": zod.number().nullish(),
+  "currentLng": zod.number().nullish(),
+  "lastLocationAt": zod.coerce.date().nullish(),
   "createdAt": zod.coerce.date().optional()
 })
 
@@ -365,6 +371,9 @@ export const UpdateDriverStatusResponse = zod.object({
   "status": zod.enum(['available', 'busy', 'offline']),
   "rating": zod.number(),
   "totalTrips": zod.number(),
+  "currentLat": zod.number().nullish(),
+  "currentLng": zod.number().nullish(),
+  "lastLocationAt": zod.coerce.date().nullish(),
   "createdAt": zod.coerce.date().optional()
 })
 
@@ -416,6 +425,45 @@ export const GetDriverStatsResponse = zod.object({
   "totalEarnings": zod.number(),
   "rating": zod.number(),
   "reviewCount": zod.number()
+})
+
+
+/**
+ * @summary Update driver's current GPS location (called by driver app)
+ */
+export const UpdateDriverLocationParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const UpdateDriverLocationBody = zod.object({
+  "lat": zod.number(),
+  "lng": zod.number()
+})
+
+export const UpdateDriverLocationResponse = zod.object({
+  "driverId": zod.number(),
+  "lat": zod.number(),
+  "lng": zod.number(),
+  "updatedAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Get real-time tracking info for an active booking
+ */
+export const GetBookingTrackingParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetBookingTrackingResponse = zod.object({
+  "bookingId": zod.number(),
+  "status": zod.enum(['pending', 'accepted', 'in_progress', 'completed', 'cancelled']),
+  "driverId": zod.number().nullish(),
+  "driverName": zod.string().nullish(),
+  "driverPhone": zod.string().nullish(),
+  "driverLat": zod.number().nullish(),
+  "driverLng": zod.number().nullish(),
+  "lastLocationAt": zod.coerce.date().nullish()
 })
 
 
@@ -608,6 +656,9 @@ export const ListAdminDriversResponseItem = zod.object({
   "status": zod.enum(['available', 'busy', 'offline']),
   "rating": zod.number(),
   "totalTrips": zod.number(),
+  "currentLat": zod.number().nullish(),
+  "currentLng": zod.number().nullish(),
+  "lastLocationAt": zod.coerce.date().nullish(),
   "createdAt": zod.coerce.date().optional()
 })
 export const ListAdminDriversResponse = zod.array(ListAdminDriversResponseItem)

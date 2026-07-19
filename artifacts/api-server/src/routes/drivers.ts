@@ -7,6 +7,8 @@ import {
   UpdateDriverStatusBody,
   ListDriverJobsParams,
   GetDriverStatsParams,
+  UpdateDriverLocationParams,
+  UpdateDriverLocationBody,
 } from "@workspace/api-zod";
 
 const router: IRouter = Router();
@@ -24,6 +26,9 @@ function formatDriver(d: typeof driversTable.$inferSelect, truckTypeName?: strin
     status: d.status,
     rating: parseFloat(d.rating),
     totalTrips: d.totalTrips,
+    currentLat: d.currentLat ?? null,
+    currentLng: d.currentLng ?? null,
+    lastLocationAt: d.lastLocationAt?.toISOString() ?? null,
     createdAt: d.createdAt.toISOString(),
   };
 }
@@ -144,6 +149,34 @@ router.get("/drivers/:id/stats", async (req, res): Promise<void> => {
     totalEarnings: Math.round(totalEarnings * 100) / 100,
     rating: Math.round(avgRating * 100) / 100,
     reviewCount: reviews.length,
+  });
+});
+
+// PATCH /drivers/:id/location
+router.patch("/drivers/:id/location", async (req, res): Promise<void> => {
+  const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+  const idParsed = UpdateDriverLocationParams.safeParse({ id: parseInt(raw, 10) });
+  if (!idParsed.success) { res.status(400).json({ error: "Invalid id" }); return; }
+
+  const bodyParsed = UpdateDriverLocationBody.safeParse(req.body);
+  if (!bodyParsed.success) { res.status(400).json({ error: bodyParsed.error.message }); return; }
+
+  const [updated] = await db.update(driversTable)
+    .set({
+      currentLat: bodyParsed.data.lat,
+      currentLng: bodyParsed.data.lng,
+      lastLocationAt: new Date(),
+    })
+    .where(eq(driversTable.id, idParsed.data.id))
+    .returning();
+
+  if (!updated) { res.status(404).json({ error: "Not found" }); return; }
+
+  res.json({
+    driverId: updated.id,
+    lat: updated.currentLat!,
+    lng: updated.currentLng!,
+    updatedAt: updated.lastLocationAt!.toISOString(),
   });
 });
 

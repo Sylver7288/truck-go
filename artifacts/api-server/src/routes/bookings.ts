@@ -11,6 +11,7 @@ import {
   AcceptBookingParams,
   StartBookingParams,
   CompleteBookingParams,
+  GetBookingTrackingParams,
 } from "@workspace/api-zod";
 
 const router: IRouter = Router();
@@ -224,6 +225,31 @@ router.patch("/bookings/:id/complete", async (req, res): Promise<void> => {
   const [tt] = await db.select().from(truckTypesTable).where(eq(truckTypesTable.id, updated.truckTypeId));
 
   res.json(formatBooking(updated, customer, driver, tt));
+});
+
+// GET /bookings/:id/tracking
+router.get("/bookings/:id/tracking", async (req, res): Promise<void> => {
+  const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+  const parsed = GetBookingTrackingParams.safeParse({ id: parseInt(raw, 10) });
+  if (!parsed.success) { res.status(400).json({ error: "Invalid id" }); return; }
+
+  const [booking] = await db.select().from(bookingsTable).where(eq(bookingsTable.id, parsed.data.id));
+  if (!booking) { res.status(404).json({ error: "Not found" }); return; }
+
+  const driver = booking.driverId
+    ? (await db.select().from(driversTable).where(eq(driversTable.id, booking.driverId)))[0]
+    : null;
+
+  res.json({
+    bookingId: booking.id,
+    status: booking.status,
+    driverId: booking.driverId ?? null,
+    driverName: driver?.name ?? null,
+    driverPhone: driver?.phone ?? null,
+    driverLat: driver?.currentLat ?? null,
+    driverLng: driver?.currentLng ?? null,
+    lastLocationAt: driver?.lastLocationAt?.toISOString() ?? null,
+  });
 });
 
 export default router;

@@ -1,49 +1,68 @@
 ---
 name: TruckGo platform architecture
-description: Key decisions and conventions for the TruckGo monorepo — web app, driver Expo app, API server, DB schema.
+description: Full-stack "Uber for trucks" platform — web app + driver mobile app sharing one API + DB — with live GPS tracking.
 ---
 
 ## Products
-- **Customer web app** (`artifacts/truckgo-web`, React/Vite, previewPath `/`)
-- **Driver mobile app** (`artifacts/truckgo-driver`, Expo, previewPath `/truckgo-driver/`)
-- **API server** (`artifacts/api-server`, Express 5 + pino, port from `$PORT`)
+- **Customer web app** (`artifacts/truckgo-web`) — React/Vite, Astro-style dark Tailwind design
+- **Driver mobile app** (`artifacts/truckgo-driver`) — Expo/React Native
+- **Admin panel** — built into web app at `/admin`
+- **API server** (`artifacts/api-server`) — Express + Drizzle + PostgreSQL
+
+## Design language (Astro-style dark)
+- Background: `240 20% 4%` (`#07080f`) — near-black navy, default `:root` (NOT light mode)
+- Cards: `.glass-card` utility — `rgba(255,255,255,0.04)` + `backdrop-blur-16px` + `border: 1px solid rgba(255,255,255,0.08)`
+- Accent: Amber `--primary: 28 90% 55%` (`#F48525`)
+- Gradient text: `.gradient-text-amber` class in `index.css`
+- Grid pattern: `body::before` with 48px grid lines
+- Glow buttons: `.btn-glow` class adds amber shadow on hover
+- All hardcoded `bg-white`, `bg-slate-50`, `text-slate-900` → replaced with dark equivalents (`text-white`, `bg-white/4`, etc.)
+- **Leaflet dark override**: `.leaflet-tile-pane { filter: brightness(0.75) saturate(0.8) hue-rotate(195deg) }`
+
+## Live GPS Tracking (fully implemented)
+### DB
+- `drivers` table: `current_lat DOUBLE PRECISION`, `current_lng DOUBLE PRECISION`, `last_location_at TIMESTAMP`
+- Schema pushed to production DB
+
+### API endpoints
+- `PATCH /api/drivers/:id/location` — driver pushes `{ lat, lng }` → updates DB, returns `{ driverId, lat, lng, updatedAt }`
+- `GET /api/bookings/:id/tracking` — returns `{ bookingId, status, driverLat, driverLng, lastLocationAt, driverName, driverPhone }`
+
+### Driver mobile app (`artifacts/truckgo-driver/app/job/[id].tsx`)
+- Uses `expo-location` (already installed as `~19.0.8`)
+- `watchPositionAsync` with `timeInterval: 8000` and `distanceInterval: 10`
+- Starts watching when `booking.status === 'in_progress'`, stops on any other status or unmount
+- Calls `useUpdateDriverLocation` mutation from `@workspace/api-client-react`
+- Shows green "Sharing live location" badge when tracking
+
+### Customer web app (`artifacts/truckgo-web/src/components/LiveTrackingMap.tsx`)
+- Lazy-loaded via `React.lazy` (Leaflet CSS doesn't block page)
+- Uses `react-leaflet` + OpenStreetMap tiles (no API key)
+- Polls `GET /bookings/:id/tracking` via `refetchInterval: 8000`
+- Custom amber truck `DivIcon` for driver marker, green/red dots for pickup/dropoff
+- Leaflet marker icons loaded from unpkg CDN (Vite default icon fix)
+- Map shown in `booking-detail.tsx` only when status is `accepted` or `in_progress`
+- PanToDriver component auto-pans map when driver coords update
 
 ## Auth
-- Simple SHA-256 password hash (no JWT/sessions)
-- Auth role stored client-side: `{ userId, role, name, email }`
-- Web: localStorage via `useAuth` store (zustand)
-- Mobile: AsyncStorage via `context/AuthContext.tsx` → `useAuth()`
-- Login endpoint differentiates customer vs driver by `role` field in request
+- SHA-256 password hash; role stored client-side in localStorage/AsyncStorage
+- Admin: hardcoded `admin@truckgo.com` / `admin123`, `useAdminAuth` zustand store
 
-## Design tokens (both artifacts share these)
-- Primary: amber `hsl(28,90%,55%)` → `#F48525`
-- Secondary/Foreground: deep navy `hsl(222,47%,11%)` → `#0F1729`
-- Background: light slate `hsl(210,20%,98%)` → `#F5F7FA`
-- Font: Plus Jakarta Sans (web) / Inter (mobile)
-- Radius: 8px
+## Seed credentials
+| Role | Email | Password |
+|---|---|---|
+| Customer | alex@example.com | password123 |
+| Driver | carlos@driver.com | password123 |
+| Admin | admin@truckgo.com | admin123 |
 
-## API client
-- Generated hooks in `lib/api-client-react/src/generated/api.ts` — never edit directly
+## OpenAPI / Codegen
+- Spec: `lib/api-spec/openapi.yaml`
 - Regenerate: `pnpm --filter @workspace/api-spec run codegen`
-- Mobile: call `setBaseUrl(...)` from `@workspace/api-client-react` at module level in `_layout.tsx`
-- Query keys for cache invalidation: `getListDriverJobsQueryKey(id)`, `getGetBookingQueryKey(id)`, `getGetDriverStatsQueryKey(id)`, etc.
+- Generated hooks in `lib/api-client-react/src/generated/api.ts` (do NOT edit)
+- Generated Zod schemas in `lib/api-zod/src/generated/api.ts` (do NOT edit)
 
-## DB
-- Drizzle ORM + PostgreSQL
-- Schema: `lib/db/src/schema/` (customers, drivers, truck_types, bookings, reviews)
-- Push schema changes: `pnpm --filter @workspace/db run push`
-- Seeded: 6 truck types, 3 customers, 4 drivers, sample bookings (password `password123` → sha256)
-
-## OpenAPI spec
-- `lib/api-spec/openapi.yaml` — source of truth for all routes
-- Fixed: no `format: email` (causes zod error), no query param on listDriverJobs path (causes name collision)
-- Operationids: login, registerCustomer, registerDriver, getDriver, listDriverJobs, getDriverStats, updateDriverStatus, acceptBooking, startBooking, completeBooking, cancelBooking, listBookings, createBooking, etc.
-
-**Why:** Codegen is fragile — these two fixes took time to find; preserve them.
-
-## Mutation call signatures (orval-generated)
-- `useUpdateDriverStatus().mutate({ id, data: { status } })`
-- `useAcceptBooking().mutate({ id, data: { driverId } })`
-- `useStartBooking().mutate({ id })`
-- `useCompleteBooking().mutate({ id })`
-- `useCancelBooking().mutate({ id })`
+## Key conventions
+- CSS vars in `index.css` `:root` are dark by default (no `.dark` class needed on body)
+- `body::before` provides the subtle 48px grid pattern (position: fixed, z-index: 0; `#root` has z-index: 1)
+- All new glass cards use `.glass-card` utility class
+- Leaflet must be lazy-loaded to avoid CSS ordering issues with Vite

@@ -400,6 +400,52 @@ paths:
               schema:
                 $ref: "#/components/schemas/DriverStats"
 
+  /drivers/{id}/location:
+    patch:
+      operationId: updateDriverLocation
+      tags: [drivers]
+      summary: Update driver's current GPS location (called by driver app)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DriverLocationUpdate"
+      responses:
+        "200":
+          description: Location updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DriverLocation"
+
+  /bookings/{id}/tracking:
+    get:
+      operationId: getBookingTracking
+      tags: [bookings]
+      summary: Get real-time tracking info for an active booking
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Tracking info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrackingInfo"
+        "404":
+          description: Not found
+
   /bookings/{id}/accept:
     patch:
       operationId: acceptBooking
@@ -838,8 +884,61 @@ components:
           type: number
         totalTrips:
           type: integer
+        currentLat:
+          type: ["number", "null"]
+        currentLng:
+          type: ["number", "null"]
+        lastLocationAt:
+          type: ["string", "null"]
+          format: date-time
         createdAt:
           type: string
+          format: date-time
+
+    DriverLocationUpdate:
+      type: object
+      required: [lat, lng]
+      properties:
+        lat:
+          type: number
+        lng:
+          type: number
+
+    DriverLocation:
+      type: object
+      required: [driverId, lat, lng, updatedAt]
+      properties:
+        driverId:
+          type: integer
+        lat:
+          type: number
+        lng:
+          type: number
+        updatedAt:
+          type: string
+          format: date-time
+
+    TrackingInfo:
+      type: object
+      required: [bookingId, status]
+      properties:
+        bookingId:
+          type: integer
+        status:
+          type: string
+          enum: [pending, accepted, in_progress, completed, cancelled]
+        driverId:
+          type: ["integer", "null"]
+        driverName:
+          type: ["string", "null"]
+        driverPhone:
+          type: ["string", "null"]
+        driverLat:
+          type: ["number", "null"]
+        driverLng:
+          type: ["number", "null"]
+        lastLocationAt:
+          type: ["string", "null"]
           format: date-time
 
     DriverStatusUpdate:
