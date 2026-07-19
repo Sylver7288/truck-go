@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
-import { Truck, LogOut, ClipboardList, LayoutDashboard, User, Menu, X } from "lucide-react";
+import { Truck, LogOut, ClipboardList, LayoutDashboard, User, Menu, X, HelpCircle, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -13,6 +13,11 @@ const CUSTOMER_NAV = [
 const DRIVER_NAV = [
   { href: "/driver", label: "Dashboard", icon: LayoutDashboard },
   { href: "/driver/jobs", label: "Jobs", icon: ClipboardList },
+];
+
+const PUBLIC_NAV = [
+  { href: "/faq", label: "FAQ", icon: HelpCircle },
+  { href: "/contact", label: "Contact", icon: Mail },
 ];
 
 export function Navbar() {
@@ -50,28 +55,45 @@ export function Navbar() {
           </Link>
 
           {/* Nav links — desktop */}
-          {user && navItems.length > 0 && (
-            <nav className="hidden md:flex items-center gap-1 flex-1">
-              {navItems.map((item) => {
-                const isActive = item.href === "/" ? location === "/" : location.startsWith(item.href);
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={cn(
-                      "flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all",
-                      isActive
-                        ? "text-primary bg-primary/10 font-semibold"
-                        : "text-white/60 hover:text-white hover:bg-white/6"
-                    )}
-                  >
-                    {item.icon && <item.icon className="h-4 w-4" />}
-                    {item.label}
-                  </Link>
-                );
-              })}
-            </nav>
-          )}
+          <nav className="hidden md:flex items-center gap-1 flex-1">
+            {(user ? navItems : []).map((item) => {
+              const isActive = item.href === "/" ? location === "/" : location.startsWith(item.href);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    "flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all",
+                    isActive
+                      ? "text-primary bg-primary/10 font-semibold"
+                      : "text-white/60 hover:text-white hover:bg-white/6"
+                  )}
+                >
+                  {item.icon && <item.icon className="h-4 w-4" />}
+                  {item.label}
+                </Link>
+              );
+            })}
+            {/* Public links always visible */}
+            {PUBLIC_NAV.map((item) => {
+              const isActive = location.startsWith(item.href);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    "flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all",
+                    isActive
+                      ? "text-primary bg-primary/10 font-semibold"
+                      : "text-white/60 hover:text-white hover:bg-white/6"
+                  )}
+                >
+                  <item.icon className="h-4 w-4" />
+                  {item.label}
+                </Link>
+              );
+            })}
+          </nav>
 
           {/* Right side */}
           <div className="flex items-center gap-2">
@@ -120,9 +142,9 @@ export function Navbar() {
       </div>
 
       {/* Mobile menu */}
-      {mobileOpen && user && (
+      {mobileOpen && (
         <div className="md:hidden border-t border-white/8 px-4 py-4 space-y-1" style={{ background: 'rgba(7,8,15,0.95)' }}>
-          {navItems.map((item) => {
+          {user && navItems.map((item) => {
             const isActive = item.href === "/" ? location === "/" : location.startsWith(item.href);
             return (
               <Link
@@ -139,12 +161,31 @@ export function Navbar() {
               </Link>
             );
           })}
-          <Link href="/profile" onClick={() => setMobileOpen(false)} className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium text-white/70 hover:text-white hover:bg-white/6 transition-all">
-            <User className="h-4 w-4" /> Profile
-          </Link>
-          <button onClick={handleLogout} className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium text-red-400 hover:bg-red-500/10 transition-all">
-            <LogOut className="h-4 w-4" /> Sign out
-          </button>
+          {/* Public links */}
+          {PUBLIC_NAV.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              onClick={() => setMobileOpen(false)}
+              className={cn(
+                "flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium transition-all",
+                location.startsWith(item.href) ? "text-primary bg-primary/10" : "text-white/70 hover:text-white hover:bg-white/6"
+              )}
+            >
+              <item.icon className="h-4 w-4" />
+              {item.label}
+            </Link>
+          ))}
+          {user && (
+            <>
+              <Link href="/profile" onClick={() => setMobileOpen(false)} className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium text-white/70 hover:text-white hover:bg-white/6 transition-all">
+                <User className="h-4 w-4" /> Profile
+              </Link>
+              <button onClick={handleLogout} className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium text-red-400 hover:bg-red-500/10 transition-all">
+                <LogOut className="h-4 w-4" /> Sign out
+              </button>
+            </>
+          )}
         </div>
       )}
     </header>

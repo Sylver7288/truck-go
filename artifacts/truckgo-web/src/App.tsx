@@ -10,9 +10,12 @@ import Home from '@/pages/customer/home';
 import Bookings from '@/pages/customer/bookings';
 import BookingDetail from '@/pages/customer/booking-detail';
 import Profile from '@/pages/customer/profile';
+import Faq from '@/pages/faq';
+import Contact from '@/pages/contact';
 import Login from '@/pages/login';
 import Register from '@/pages/register';
 import RegisterDriver from '@/pages/register-driver';
+import { ChatWidget } from '@/components/chat/ChatWidget';
 
 // Driver pages
 import DriverDashboard from '@/pages/driver/dashboard';
@@ -71,12 +74,15 @@ function Router() {
           <Route path="/bookings" component={Bookings} />
           <Route path="/bookings/:id" component={BookingDetail} />
           <Route path="/profile" component={Profile} />
+          <Route path="/faq" component={Faq} />
+          <Route path="/contact" component={Contact} />
           <Route path="/driver" component={DriverDashboard} />
           <Route path="/driver/jobs" component={DriverJobs} />
           <Route path="/driver/jobs/:id" component={JobDetail} />
           <Route component={NotFound} />
         </Switch>
       </main>
+      <ChatWidget />
     </div>
   );
 }

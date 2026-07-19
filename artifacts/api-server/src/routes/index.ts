@@ -7,6 +7,8 @@ import bookingsRouter from "./bookings";
 import driversRouter from "./drivers";
 import reviewsRouter from "./reviews";
 import adminRouter from "./admin";
+import contactRouter from "./contact";
+import chatRouter from "./chat";
 
 const router: IRouter = Router();
 
@@ -18,5 +20,7 @@ router.use(bookingsRouter);
 router.use(driversRouter);
 router.use(reviewsRouter);
 router.use(adminRouter);
+router.use(contactRouter);
+router.use(chatRouter);
 
 export default router;
