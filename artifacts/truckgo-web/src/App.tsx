@@ -4,6 +4,8 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import NotFound from '@/pages/not-found';
 import { Route, Switch, Router as WouterRouter, useLocation, Redirect } from 'wouter';
 import { Navbar } from '@/components/layout/navbar';
+import { Footer } from '@/components/layout/footer';
+import { ThemeProvider } from '@/hooks/use-theme';
 
 // Customer pages
 import Home from '@/pages/customer/home';
@@ -63,9 +65,9 @@ function Router() {
   }
 
   return (
-    <div className="bg-background text-foreground">
+    <div className="bg-background text-foreground min-h-screen flex flex-col">
       <Navbar />
-      <main>
+      <main className="flex-1">
         <Switch>
           <Route path="/" component={Home} />
           <Route path="/login" component={Login} />
@@ -82,6 +84,7 @@ function Router() {
           <Route component={NotFound} />
         </Switch>
       </main>
+      <Footer />
       <ChatWidget />
     </div>
   );
@@ -89,14 +92,16 @@ function Router() {
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
-          <Router />
-        </WouterRouter>
-        <Toaster />
-      </TooltipProvider>
-    </QueryClientProvider>
+    <ThemeProvider>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
+            <Router />
+          </WouterRouter>
+          <Toaster />
+        </TooltipProvider>
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 }
 

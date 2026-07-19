@@ -168,7 +168,7 @@ export function ChatWidget() {
       {/* ── Chat panel ── */}
       <div
         className={cn(
-          "fixed bottom-24 right-5 z-50 flex flex-col transition-all duration-300 origin-bottom-right",
+          "fixed bottom-24 right-5 z-[9999] flex flex-col transition-all duration-300 origin-bottom-right",
           "w-[360px] sm:w-[400px] shadow-2xl",
           open && !minimised ? "opacity-100 scale-100 pointer-events-auto" : "opacity-0 scale-95 pointer-events-none"
         )}
@@ -289,7 +289,7 @@ export function ChatWidget() {
       {/* ── Minimised bar ── */}
       {open && minimised && (
         <div
-          className="fixed bottom-5 right-5 z-50 cursor-pointer flex items-center gap-3 px-4 py-3 rounded-2xl border border-primary/30 shadow-xl shadow-black/50 transition-all hover:border-primary/60"
+          className="fixed bottom-5 right-5 z-[9999] cursor-pointer flex items-center gap-3 px-4 py-3 rounded-2xl border border-primary/30 shadow-xl shadow-black/50 transition-all hover:border-primary/60"
           style={{ background: "linear-gradient(135deg,rgba(244,133,37,0.2),rgba(244,133,37,0.08))", backdropFilter: "blur(20px)" }}
           onClick={() => setMinimised(false)}
         >
@@ -304,7 +304,7 @@ export function ChatWidget() {
         <button
           id="chat-widget-trigger"
           onClick={handleOpen}
-          className="fixed bottom-5 right-5 z-50 h-14 w-14 rounded-full bg-primary shadow-xl shadow-primary/40 flex items-center justify-center transition-all hover:scale-110 hover:shadow-primary/60 btn-glow group"
+          className="fixed bottom-5 right-5 z-[9999] h-14 w-14 rounded-full bg-primary shadow-xl shadow-primary/40 flex items-center justify-center transition-all hover:scale-110 hover:shadow-primary/60 btn-glow group"
           aria-label="Open chat"
         >
           <MessageSquare className="h-6 w-6 text-white group-hover:scale-110 transition-transform" />

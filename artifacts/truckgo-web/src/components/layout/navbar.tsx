@@ -1,9 +1,11 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
-import { Truck, LogOut, ClipboardList, LayoutDashboard, User, Menu, X, HelpCircle, Mail } from "lucide-react";
+import { Truck, LogOut, ClipboardList, LayoutDashboard, User, Menu, X, HelpCircle, Mail, Sun, Moon, Monitor } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
+import { useTheme } from "@/hooks/use-theme";
+import type { Theme } from "@/hooks/use-theme";
 
 const CUSTOMER_NAV = [
   { href: "/", label: "Book a Truck" },
@@ -19,6 +21,65 @@ const PUBLIC_NAV = [
   { href: "/faq", label: "FAQ", icon: HelpCircle },
   { href: "/contact", label: "Contact", icon: Mail },
 ];
+
+const THEME_OPTIONS: { value: Theme; icon: typeof Sun; label: string }[] = [
+  { value: "light",  icon: Sun,     label: "Light"  },
+  { value: "dark",   icon: Moon,    label: "Dark"   },
+  { value: "system", icon: Monitor, label: "System" },
+];
+
+function ThemeToggle() {
+  const { theme, setTheme } = useTheme();
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const current = THEME_OPTIONS.find(o => o.value === theme) ?? THEME_OPTIONS[1];
+  const Icon = current.icon;
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen(v => !v)}
+        title="Change theme"
+        className={cn(
+          "p-2 rounded-lg transition-all text-white/55 hover:text-white hover:bg-white/8",
+          open && "bg-white/8 text-white"
+        )}
+      >
+        <Icon className="h-4 w-4" />
+      </button>
+      {open && (
+        <div className="absolute right-0 top-10 z-50 min-w-[130px] rounded-xl border border-white/10 shadow-xl overflow-hidden"
+          style={{ background: "rgba(12,13,26,0.97)", backdropFilter: "blur(20px)" }}>
+          {THEME_OPTIONS.map(({ value, icon: OptionIcon, label }) => (
+            <button
+              key={value}
+              onClick={() => { setTheme(value); setOpen(false); }}
+              className={cn(
+                "w-full flex items-center gap-2.5 px-4 py-2.5 text-sm transition-all",
+                theme === value
+                  ? "text-primary bg-primary/10 font-semibold"
+                  : "text-white/60 hover:text-white hover:bg-white/6"
+              )}
+            >
+              <OptionIcon className="h-3.5 w-3.5" />
+              {label}
+              {theme === value && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-primary" />}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function Navbar() {
   const { user, logout } = useAuth();
@@ -152,6 +213,8 @@ export function Navbar() {
                 </Button>
               </>
             )}
+            {/* Theme toggle — always visible */}
+            <ThemeToggle />
             {/* Hamburger — always visible on mobile */}
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
