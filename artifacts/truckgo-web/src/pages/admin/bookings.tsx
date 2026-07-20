@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { useListAdminBookings } from "@workspace/api-client-react";
+import { useListAdminBookings, useListAdminDrivers } from "@workspace/api-client-react";
 import { AdminLayout } from "./layout";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { Search, SlidersHorizontal } from "lucide-react";
+import { Search } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 
 type StatusFilter = "all" | "pending" | "accepted" | "in_progress" | "completed" | "cancelled";
 
@@ -30,10 +31,14 @@ const FILTERS: StatusFilter[] = ["all", "pending", "accepted", "in_progress", "c
 export default function AdminBookings() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [search, setSearch] = useState("");
+  const [updatingId, setUpdatingId] = useState<number | null>(null);
+  const queryClient = useQueryClient();
 
   const { data: bookings, isLoading } = useListAdminBookings();
+  const { data: drivers } = useListAdminDrivers();
 
   const bookingRows = Array.isArray(bookings) ? bookings : [];
+  const driverRows = Array.isArray(drivers) ? drivers : [];
 
   const filtered = bookingRows.filter((b) => {
     const matchStatus = statusFilter === "all" || b.status === statusFilter;
@@ -47,6 +52,21 @@ export default function AdminBookings() {
       b.goodsDescription.toLowerCase().includes(q);
     return matchStatus && matchSearch;
   });
+
+  const updateBooking = async (id: number, data: { status?: string; driverId?: number | null; finalPrice?: number | null }) => {
+    setUpdatingId(id);
+    try {
+      const response = await fetch(`/api/admin/bookings/${id}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error(await response.text());
+      await queryClient.invalidateQueries();
+    } finally {
+      setUpdatingId(null);
+    }
+  };
 
   return (
     <AdminLayout>
@@ -103,13 +123,14 @@ export default function AdminBookings() {
                   <th className="text-left px-5 py-3 font-medium">Status</th>
                   <th className="text-right px-5 py-3 font-medium">Amount</th>
                   <th className="text-left px-5 py-3 font-medium hidden xl:table-cell">Date</th>
+                  <th className="text-left px-5 py-3 font-medium">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {isLoading
                   ? Array.from({ length: 8 }).map((_, i) => (
                       <tr key={i} className="border-b border-slate-800/50">
-                        <td colSpan={9} className="px-5 py-3">
+                        <td colSpan={10} className="px-5 py-3">
                           <Skeleton className="h-5 bg-slate-800 rounded" />
                         </td>
                       </tr>
@@ -119,10 +140,10 @@ export default function AdminBookings() {
                         <td className="px-5 py-3 text-slate-400 font-mono text-xs">#{b.id}</td>
                         <td className="px-5 py-3 text-white font-medium">{b.customerName ?? "—"}</td>
                         <td className="px-5 py-3 text-slate-300">{b.driverName ?? <span className="text-slate-600 italic">Unassigned</span>}</td>
-                        <td className="px-5 py-3 text-slate-400 hidden lg:table-cell max-w-[200px]">
+                        <td className="px-5 py-3 text-slate-400 hidden lg:table-cell max-w-50">
                           <span className="truncate block">{b.pickupAddress.split(",")[0]}</span>
                         </td>
-                        <td className="px-5 py-3 text-slate-400 hidden lg:table-cell max-w-[200px]">
+                        <td className="px-5 py-3 text-slate-400 hidden lg:table-cell max-w-50">
                           <span className="truncate block">{b.dropoffAddress.split(",")[0]}</span>
                         </td>
                         <td className="px-5 py-3 text-slate-400 text-xs">{b.truckTypeName ?? "—"}</td>
@@ -135,11 +156,42 @@ export default function AdminBookings() {
                           {formatCurrency(b.finalPrice ?? b.estimatedPrice)}
                         </td>
                         <td className="px-5 py-3 text-slate-500 text-xs hidden xl:table-cell">{formatDate(b.createdAt)}</td>
+                        <td className="px-5 py-3">
+                          <div className="flex flex-col gap-2 min-w-40">
+                            <select
+                              value={b.status}
+                              disabled={updatingId === b.id}
+                              onChange={(event) => updateBooking(b.id, { status: event.target.value })}
+                              className="bg-slate-800 border border-slate-700 rounded-md px-2 py-1 text-xs text-white focus:outline-none focus:border-primary"
+                            >
+                              {FILTERS.filter((status) => status !== "all").map((status) => (
+                                <option key={status} value={status}>{STATUS_LABELS[status]}</option>
+                              ))}
+                            </select>
+                            <select
+                              value={b.driverId ?? ""}
+                              disabled={updatingId === b.id}
+                              onChange={(event) => {
+                                const nextDriverId = event.target.value ? Number(event.target.value) : null;
+                                updateBooking(b.id, {
+                                  driverId: nextDriverId,
+                                  status: nextDriverId && b.status === "pending" ? "accepted" : b.status,
+                                });
+                              }}
+                              className="bg-slate-800 border border-slate-700 rounded-md px-2 py-1 text-xs text-white focus:outline-none focus:border-primary"
+                            >
+                              <option value="">Unassigned</option>
+                              {driverRows.map((driver) => (
+                                <option key={driver.id} value={driver.id}>{driver.name}</option>
+                              ))}
+                            </select>
+                          </div>
+                        </td>
                       </tr>
                     ))}
                 {!isLoading && filtered.length === 0 && (
                   <tr>
-                    <td colSpan={9} className="px-5 py-16 text-center text-slate-500">
+                    <td colSpan={10} className="px-5 py-16 text-center text-slate-500">
                       No bookings match your filter.
                     </td>
                   </tr>

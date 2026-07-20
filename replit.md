@@ -4,7 +4,9 @@ Truck booking platform with a customer website, admin panel, driver mobile app, 
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
+- `pnpm run dev` — run API + web/admin together locally
+- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5001 by default)
+- `pnpm --filter @workspace/truckgo-web run dev` — run customer website + admin panel (port 5000 by default, proxies `/api` to port 5001)
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm run build` — typecheck + build all packages
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
@@ -46,6 +48,7 @@ Truck booking platform with a customer website, admin panel, driver mobile app, 
 ## Gotchas
 
 - Use `corepack pnpm ...` on Windows if a global `pnpm` command is not available.
+- Local full-stack dev expects API on `5001` and web/admin on `5000`.
 - Driver static build requires `EXPO_PUBLIC_DOMAIN` or a Replit domain env.
 - `pnpm --filter @workspace/api-spec run codegen` regenerates generated client/schema files.
 - The workspace has typecheck/build scripts but no test or lint scripts yet.

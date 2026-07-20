@@ -205,7 +205,7 @@ export default function BookingDetail() {
 
               <div className="relative pl-7">
                 {/* Connector line */}
-                <div className="absolute left-[7px] top-3 bottom-3 w-px bg-gradient-to-b from-green-500 to-red-500 opacity-40" />
+                <div className="absolute left-1.75 top-3 bottom-3 w-px bg-linear-to-b from-green-500 to-red-500 opacity-40" />
 
                 <div className="mb-6 relative">
                   <div className="absolute -left-7 top-1 h-3.5 w-3.5 rounded-full bg-green-500 ring-4 ring-green-500/20" />
@@ -317,7 +317,7 @@ export default function BookingDetail() {
             {/* Payment */}
             <div className="glass-card p-5">
               <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-4">Payment</h2>
-              <div className="bg-gradient-to-br from-primary/20 to-primary/5 rounded-xl p-4 border border-primary/20 mb-3">
+              <div className="bg-linear-to-br from-primary/20 to-primary/5 rounded-xl p-4 border border-primary/20 mb-3">
                 <div className="text-xs text-primary/70 font-medium mb-1">
                   {booking.status === "completed" ? "Final Price" : "Estimated Price"}
                 </div>
@@ -339,7 +339,7 @@ export default function BookingDetail() {
               {booking.driverId ? (
                 <div className="space-y-4">
                   <div className="flex items-center gap-3">
-                    <div className="h-11 w-11 rounded-full bg-gradient-to-br from-primary/30 to-primary/10 text-primary text-sm font-bold flex items-center justify-center ring-2 ring-primary/20 shrink-0">
+                    <div className="h-11 w-11 rounded-full bg-linear-to-br from-primary/30 to-primary/10 text-primary text-sm font-bold flex items-center justify-center ring-2 ring-primary/20 shrink-0">
                       {booking.driverName?.charAt(0) ?? "D"}
                     </div>
                     <div>

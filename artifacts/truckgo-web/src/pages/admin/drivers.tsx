@@ -5,6 +5,7 @@ import { formatDate } from "@/lib/format";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { Search, Star } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 
 type StatusFilter = "all" | "available" | "busy" | "offline";
 
@@ -25,6 +26,8 @@ const FILTERS: StatusFilter[] = ["all", "available", "busy", "offline"];
 export default function AdminDrivers() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [search, setSearch] = useState("");
+  const [updatingId, setUpdatingId] = useState<number | null>(null);
+  const queryClient = useQueryClient();
 
   const { data: drivers, isLoading } = useListAdminDrivers();
 
@@ -40,6 +43,21 @@ export default function AdminDrivers() {
       (d.truckTypeName ?? "").toLowerCase().includes(q);
     return matchStatus && matchSearch;
   });
+
+  const updateDriverStatus = async (id: number, status: string) => {
+    setUpdatingId(id);
+    try {
+      const response = await fetch(`/api/admin/drivers/${id}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+      if (!response.ok) throw new Error(await response.text());
+      await queryClient.invalidateQueries();
+    } finally {
+      setUpdatingId(null);
+    }
+  };
 
   return (
     <AdminLayout>
@@ -92,13 +110,14 @@ export default function AdminDrivers() {
                   <th className="text-left px-5 py-3 font-medium">Rating</th>
                   <th className="text-right px-5 py-3 font-medium">Trips</th>
                   <th className="text-left px-5 py-3 font-medium hidden lg:table-cell">Joined</th>
+                  <th className="text-left px-5 py-3 font-medium">Action</th>
                 </tr>
               </thead>
               <tbody>
                 {isLoading
                   ? Array.from({ length: 6 }).map((_, i) => (
                       <tr key={i} className="border-b border-slate-800/50">
-                        <td colSpan={8} className="px-5 py-3">
+                        <td colSpan={9} className="px-5 py-3">
                           <Skeleton className="h-5 bg-slate-800 rounded" />
                         </td>
                       </tr>
@@ -129,11 +148,23 @@ export default function AdminDrivers() {
                         </td>
                         <td className="px-5 py-3 text-right text-slate-300 font-semibold">{d.totalTrips}</td>
                         <td className="px-5 py-3 text-slate-500 text-xs hidden lg:table-cell">{d.createdAt ? formatDate(d.createdAt) : "—"}</td>
+                        <td className="px-5 py-3">
+                          <select
+                            value={d.status}
+                            disabled={updatingId === d.id}
+                            onChange={(event) => updateDriverStatus(d.id, event.target.value)}
+                            className="bg-slate-800 border border-slate-700 rounded-md px-2 py-1 text-xs text-white focus:outline-none focus:border-primary"
+                          >
+                            {FILTERS.filter((status) => status !== "all").map((status) => (
+                              <option key={status} value={status}>{STATUS_LABELS[status]}</option>
+                            ))}
+                          </select>
+                        </td>
                       </tr>
                     ))}
                 {!isLoading && filtered.length === 0 && (
                   <tr>
-                    <td colSpan={8} className="px-5 py-16 text-center text-slate-500">
+                    <td colSpan={9} className="px-5 py-16 text-center text-slate-500">
                       No drivers match your filter.
                     </td>
                   </tr>

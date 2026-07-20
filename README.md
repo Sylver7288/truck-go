@@ -42,12 +42,14 @@ Required environment variables:
 - `DATABASE_URL` - PostgreSQL connection string for API and Drizzle.
 - `PORT` - API/dev server port, commonly `5000`.
 - `BASE_PATH` - Vite base path, usually `/`.
+- `VITE_API_PROXY_TARGET` - API server target for local web/admin requests, usually `http://localhost:5001`.
 - `VITE_ADMIN_EMAIL` and `VITE_ADMIN_PASSWORD` - demo admin panel credentials for the web app.
 - `EXPO_PUBLIC_DOMAIN` - public API/deployment host used by the driver app.
 
 ## Common Commands
 
 ```bash
+corepack pnpm run dev
 corepack pnpm run typecheck
 corepack pnpm run build
 corepack pnpm --filter @workspace/api-server run dev
@@ -58,6 +60,8 @@ corepack pnpm --filter @workspace/db run push
 ```
 
 On Windows or environments without a global `pnpm` shim, use `corepack pnpm ...` as shown above.
+
+The local full-stack dev setup runs the API on port `5001` and the web/admin app on port `5000`. The web Vite server proxies `/api/*` to `VITE_API_PROXY_TARGET`, so the customer site and admin panel can use the same relative API paths as production.
 
 ## Build Notes
 
