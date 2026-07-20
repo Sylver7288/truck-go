@@ -13,11 +13,14 @@ export default function AdminLogin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    const ok = login(email, password);
+    setIsSubmitting(true);
+    const ok = await login(email, password);
+    setIsSubmitting(false);
     if (ok) {
       setLocation("/admin");
     } else {
@@ -69,8 +72,8 @@ export default function AdminLogin() {
                   className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-500 focus:border-primary"
                 />
               </div>
-              <Button type="submit" className="w-full h-11 mt-2">
-                Sign In
+              <Button type="submit" disabled={isSubmitting} className="w-full h-11 mt-2">
+                {isSubmitting ? "Signing in..." : "Sign In"}
               </Button>
             </form>
           </CardContent>

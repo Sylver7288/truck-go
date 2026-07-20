@@ -7,6 +7,7 @@ import bookingsRouter from "./bookings";
 import driversRouter from "./drivers";
 import reviewsRouter from "./reviews";
 import adminRouter from "./admin";
+import adminAuthRouter, { requireAdminSession } from "./admin-auth";
 import contactRouter from "./contact";
 import chatRouter from "./chat";
 
@@ -19,6 +20,8 @@ router.use(estimatesRouter);
 router.use(bookingsRouter);
 router.use(driversRouter);
 router.use(reviewsRouter);
+router.use(adminAuthRouter);
+router.use("/admin", requireAdminSession);
 router.use(adminRouter);
 router.use(contactRouter);
 router.use(chatRouter);

@@ -1,27 +1,54 @@
 import { create } from "zustand";
 
-const ADMIN_EMAIL = import.meta.env.VITE_ADMIN_EMAIL ?? "";
-const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD ?? "";
 const STORAGE_KEY = "truckgo-admin-auth";
 
 interface AdminAuthState {
   isAuthenticated: boolean;
-  login: (email: string, password: string) => boolean;
-  logout: () => void;
+  isChecking: boolean;
+  login: (email: string, password: string) => Promise<boolean>;
+  logout: () => Promise<void>;
+  checkSession: () => Promise<void>;
 }
 
-export const useAdminAuth = create<AdminAuthState>(() => ({
+export const useAdminAuth = create<AdminAuthState>((set) => ({
   isAuthenticated: localStorage.getItem(STORAGE_KEY) === "true",
-  login: (email: string, password: string) => {
-    if (ADMIN_EMAIL && ADMIN_PASSWORD && email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
+  isChecking: true,
+  login: async (email: string, password: string) => {
+    const response = await fetch("/api/admin/auth/login", {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+
+    if (response.ok) {
       localStorage.setItem(STORAGE_KEY, "true");
-      useAdminAuth.setState({ isAuthenticated: true });
+      set({ isAuthenticated: true, isChecking: false });
       return true;
     }
+
+    localStorage.removeItem(STORAGE_KEY);
+    set({ isAuthenticated: false, isChecking: false });
     return false;
   },
-  logout: () => {
+  logout: async () => {
+    try {
+      await fetch("/api/admin/auth/logout", { method: "POST", credentials: "same-origin" });
+    } finally {
+      localStorage.removeItem(STORAGE_KEY);
+      set({ isAuthenticated: false, isChecking: false });
+    }
+  },
+  checkSession: async () => {
+    set({ isChecking: true });
+    const response = await fetch("/api/admin/auth/me", { credentials: "same-origin" });
+    if (response.ok) {
+      localStorage.setItem(STORAGE_KEY, "true");
+      set({ isAuthenticated: true, isChecking: false });
+      return;
+    }
+
     localStorage.removeItem(STORAGE_KEY);
-    useAdminAuth.setState({ isAuthenticated: false });
+    set({ isAuthenticated: false, isChecking: false });
   },
 }));

@@ -26,8 +26,8 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const [location, setLocation] = useLocation();
   const { logout } = useAdminAuth();
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     setLocation("/admin/login");
   };
 

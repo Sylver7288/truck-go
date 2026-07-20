@@ -1,4 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import NotFound from '@/pages/not-found';
@@ -43,7 +44,16 @@ const queryClient = new QueryClient({
 });
 
 function AdminRoute({ component: Component }: { component: React.ComponentType }) {
-  const { isAuthenticated } = useAdminAuth();
+  const { isAuthenticated, isChecking, checkSession } = useAdminAuth();
+
+  useEffect(() => {
+    void checkSession();
+  }, [checkSession]);
+
+  if (isChecking) {
+    return <div className="min-h-screen bg-slate-950" />;
+  }
+
   if (!isAuthenticated) return <Redirect to="/admin/login" />;
   return <Component />;
 }
