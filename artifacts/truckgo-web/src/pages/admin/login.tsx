@@ -73,9 +73,6 @@ export default function AdminLogin() {
                 Sign In
               </Button>
             </form>
-            <p className="text-xs text-slate-500 text-center mt-4">
-              Hint: admin@truckgo.com / admin123
-            </p>
           </CardContent>
         </Card>
       </div>

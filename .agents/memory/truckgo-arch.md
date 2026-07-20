@@ -46,14 +46,14 @@ description: Full-stack "Uber for trucks" platform — web app + driver mobile a
 
 ## Auth
 - SHA-256 password hash; role stored client-side in localStorage/AsyncStorage
-- Admin: hardcoded `admin@truckgo.com` / `admin123`, `useAdminAuth` zustand store
+- Admin panel gate uses `VITE_ADMIN_EMAIL` and `VITE_ADMIN_PASSWORD` in `useAdminAuth`.
 
 ## Seed credentials
 | Role | Email | Password |
 |---|---|---|
 | Customer | alex@example.com | password123 |
 | Driver | carlos@driver.com | password123 |
-| Admin | admin@truckgo.com | admin123 |
+| Admin | set with `VITE_ADMIN_EMAIL` | set with `VITE_ADMIN_PASSWORD` |
 
 ## OpenAPI / Codegen
 - Spec: `lib/api-spec/openapi.yaml`

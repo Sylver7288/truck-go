@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const { spawn } = require('child_process');
+const { execFileSync, spawn } = require('child_process');
 const { Readable } = require('stream');
 const { pipeline } = require('stream/promises');
 
@@ -26,18 +26,73 @@ const basePath = (process.env.BASE_PATH || '/').replace(/\/+$/, '');
 
 function exitWithError(message) {
   console.error(message);
-  if (metroProcess) {
-    metroProcess.kill();
-  }
+  stopMetroProcess();
   process.exit(1);
+}
+
+function killProcessTree(pid) {
+  if (!pid) return;
+
+  try {
+    if (process.platform === 'win32') {
+      execFileSync('taskkill', ['/PID', String(pid), '/T', '/F'], {
+        stdio: 'ignore',
+      });
+    } else {
+      process.kill(-pid, 'SIGTERM');
+    }
+  } catch {
+    try {
+      process.kill(pid, 'SIGTERM');
+    } catch {
+      // The process may already be gone.
+    }
+  }
+}
+
+function stopMetroProcess() {
+  if (!metroProcess) return;
+  killProcessTree(metroProcess.pid);
+  metroProcess = null;
+}
+
+function findPidsListeningOnPort(port) {
+  if (process.platform !== 'win32') return [];
+
+  try {
+    const output = execFileSync('netstat', ['-ano'], { encoding: 'utf8' });
+    const pids = new Set();
+
+    for (const line of output.split(/\r?\n/)) {
+      if (!line.includes(`:${port}`) || !line.includes('LISTENING')) continue;
+
+      const parts = line.trim().split(/\s+/);
+      const pid = Number(parts.at(-1));
+      if (Number.isInteger(pid) && pid > 0) {
+        pids.add(pid);
+      }
+    }
+
+    return Array.from(pids);
+  } catch {
+    return [];
+  }
+}
+
+function stopExistingMetroServer() {
+  const pids = findPidsListeningOnPort(8081);
+  if (pids.length === 0) return;
+
+  console.log(`Stopping existing Metro server on port 8081 (${pids.join(', ')})...`);
+  for (const pid of pids) {
+    killProcessTree(pid);
+  }
 }
 
 function setupSignalHandlers() {
   const cleanup = () => {
-    if (metroProcess) {
-      console.log('Cleaning up Metro process...');
-      metroProcess.kill();
-    }
+    if (metroProcess) console.log('Cleaning up Metro process...');
+    stopMetroProcess();
     process.exit(0);
   };
 
@@ -148,9 +203,15 @@ async function startMetro(expoPublicDomain, expoPublicReplId) {
     console.log(`Setting EXPO_PUBLIC_REPL_ID=${expoPublicReplId}`);
   }
 
+  const pnpmExecPath = process.env.npm_execpath;
+  const pnpmCommand = pnpmExecPath?.includes('pnpm')
+    ? process.execPath
+    : 'pnpm';
+  const pnpmArgsPrefix = pnpmExecPath?.includes('pnpm') ? [pnpmExecPath] : [];
+
   metroProcess = spawn(
-    'pnpm',
-    ['exec', 'expo', 'start', '--no-dev', '--minify', '--localhost'],
+    pnpmCommand,
+    [...pnpmArgsPrefix, 'exec', 'expo', 'start', '--no-dev', '--minify', '--localhost'],
     {
       stdio: ['ignore', 'pipe', 'pipe'],
       detached: false,
@@ -533,6 +594,7 @@ async function main() {
 
   prepareDirectories(timestamp);
   clearMetroCache();
+  stopExistingMetroServer();
 
   await startMetro(domain, expoPublicReplId);
 
@@ -574,16 +636,12 @@ async function main() {
 
   console.log('Build complete! Deploy to:', baseUrl);
 
-  if (metroProcess) {
-    metroProcess.kill();
-  }
+  stopMetroProcess();
   process.exit(0);
 }
 
 main().catch((error) => {
   console.error('Build failed:', error.message);
-  if (metroProcess) {
-    metroProcess.kill();
-  }
+  stopMetroProcess();
   process.exit(1);
 });

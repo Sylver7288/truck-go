@@ -1,6 +1,6 @@
-# [Project name]
+# Cargo Haul / TruckGo
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+Truck booking platform with a customer website, admin panel, driver mobile app, API server, and shared generated API/database packages.
 
 ## Run & Operate
 
@@ -9,7 +9,7 @@ _Replace the heading above with the project's name, and this line with one sente
 - `pnpm run build` — typecheck + build all packages
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
 - `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string
+- Required env: see `.env.example`
 
 ## Stack
 
@@ -22,24 +22,34 @@ _Replace the heading above with the project's name, and this line with one sente
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- Customer website and admin panel: `artifacts/truckgo-web`
+- Driver mobile app: `artifacts/truckgo-driver`
+- API server: `artifacts/api-server`
+- API contract: `lib/api-spec/openapi.yaml`
+- Generated API client: `lib/api-client-react`
+- Generated Zod schemas: `lib/api-zod`
+- DB schema: `lib/db/src/schema`
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- Monorepo uses pnpm workspaces and TypeScript project references for shared packages.
+- OpenAPI is the source of truth for generated React Query hooks and Zod schemas.
+- Driver app uses Expo and configures API base URL from `EXPO_PUBLIC_DOMAIN`.
+- Admin panel currently lives inside the main web app instead of a separate package.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
-
-## User preferences
-
-_Populate as you build — explicit user instructions worth remembering across sessions._
+- Customers can register, estimate/book truck moves, track bookings, chat/contact, and review trips.
+- Drivers can sign in, view/accept/start/complete jobs, update status, and share live location.
+- Admin users can access operational views inside the web app.
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- Use `corepack pnpm ...` on Windows if a global `pnpm` command is not available.
+- Driver static build requires `EXPO_PUBLIC_DOMAIN` or a Replit domain env.
+- `pnpm --filter @workspace/api-spec run codegen` regenerates generated client/schema files.
+- The workspace has typecheck/build scripts but no test or lint scripts yet.
 
 ## Pointers
 
-- See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details
+- See `README.md` for GitHub-facing setup and validation instructions.
