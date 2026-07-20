@@ -18,6 +18,7 @@ import Contact from '@/pages/contact';
 import Login from '@/pages/login';
 import Register from '@/pages/register';
 import RegisterDriver from '@/pages/register-driver';
+import VerifyEmail from '@/pages/verify-email';
 import { ChatWidget } from '@/components/chat/ChatWidget';
 
 // Driver pages
@@ -85,6 +86,7 @@ function Router() {
           <Route path="/login" component={Login} />
           <Route path="/register" component={Register} />
           <Route path="/register-driver" component={RegisterDriver} />
+          <Route path="/verify-email" component={VerifyEmail} />
           <Route path="/bookings" component={Bookings} />
           <Route path="/bookings/:id" component={BookingDetail} />
           <Route path="/profile" component={Profile} />

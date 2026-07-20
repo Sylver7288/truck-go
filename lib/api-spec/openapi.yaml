@@ -80,6 +80,50 @@ paths:
         "400":
           description: Validation error
 
+  /auth/verify-email:
+    get:
+      operationId: verifyEmail
+      tags: [auth]
+      summary: Verify a customer or driver email address
+      parameters:
+        - in: query
+          name: token
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Email verified
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmailVerificationResponse"
+        "400":
+          description: Invalid or expired verification token
+
+  /auth/resend-verification:
+    post:
+      operationId: resendVerification
+      tags: [auth]
+      summary: Resend an email verification link
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResendVerificationInput"
+      responses:
+        "200":
+          description: Verification email sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+        "400":
+          description: Validation error
+        "404":
+          description: Account not found
+
   /auth/login:
     post:
       operationId: login
@@ -100,6 +144,8 @@ paths:
                 $ref: "#/components/schemas/AuthResponse"
         "401":
           description: Invalid credentials
+        "403":
+          description: Email address is not verified
 
   /auth/me:
     get:
@@ -673,6 +719,35 @@ components:
           type: string
           enum: [customer, driver]
 
+    ResendVerificationInput:
+      type: object
+      required: [email, role]
+      properties:
+        email:
+          type: string
+        role:
+          type: string
+          enum: [customer, driver]
+
+    MessageResponse:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+
+    EmailVerificationResponse:
+      type: object
+      required: [role, email, verified]
+      properties:
+        role:
+          type: string
+          enum: [customer, driver]
+        email:
+          type: string
+        verified:
+          type: boolean
+
     AuthResponse:
       type: object
       required: [userId, role, name, email]
@@ -686,6 +761,8 @@ components:
           type: string
         email:
           type: string
+        emailVerified:
+          type: boolean
 
     UserProfile:
       type: object

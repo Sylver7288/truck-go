@@ -11,6 +11,7 @@ Truck booking platform with a customer website, admin panel, driver mobile app, 
 - `pnpm run build` — typecheck + build all packages
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
 - `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
+- `pnpm --filter @workspace/db run seed` — load/update local demo data
 - Required env: see `.env.example`
 
 ## Stack
@@ -42,8 +43,9 @@ Truck booking platform with a customer website, admin panel, driver mobile app, 
 ## Product
 
 - Customers can register, estimate/book truck moves, track bookings, chat/contact, and review trips.
+- Customer and driver registration sends email verification links through Resend when configured; local dev logs verification links when `RESEND_API_KEY` is absent.
 - Drivers can sign in, view/accept/start/complete jobs, update status, and share live location.
-- Admin users can access operational views inside the web app.
+- Admin users can access operational views inside the web app after backend session login.
 
 ## Gotchas
 

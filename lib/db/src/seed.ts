@@ -82,20 +82,27 @@ async function seedCustomers() {
       email: "ava.customer@truckgo.test",
       phone: "+61 400 100 101",
       passwordHash: hashPassword("password123"),
+      emailVerifiedAt: new Date(),
     },
     {
       name: "Noah Patel",
       email: "noah.customer@truckgo.test",
       phone: "+61 400 100 102",
       passwordHash: hashPassword("password123"),
+      emailVerifiedAt: new Date(),
     },
     {
       name: "Mia Chen",
       email: "mia.customer@truckgo.test",
       phone: "+61 400 100 103",
       passwordHash: hashPassword("password123"),
+      emailVerifiedAt: new Date(),
     },
   ]).onConflictDoNothing({ target: customersTable.email });
+
+  await db.update(customersTable).set({ emailVerifiedAt: new Date() }).where(eq(customersTable.email, "ava.customer@truckgo.test"));
+  await db.update(customersTable).set({ emailVerifiedAt: new Date() }).where(eq(customersTable.email, "noah.customer@truckgo.test"));
+  await db.update(customersTable).set({ emailVerifiedAt: new Date() }).where(eq(customersTable.email, "mia.customer@truckgo.test"));
 }
 
 async function seedDrivers() {
@@ -109,6 +116,7 @@ async function seedDrivers() {
       email: "jack.driver@truckgo.test",
       phone: "+61 411 200 201",
       passwordHash: hashPassword("password123"),
+      emailVerifiedAt: new Date(),
       licenseNumber: "NSW-DL-9001",
       vehiclePlate: "TG-101",
       vehicleYear: 2021,
@@ -125,6 +133,7 @@ async function seedDrivers() {
       email: "sophia.driver@truckgo.test",
       phone: "+61 411 200 202",
       passwordHash: hashPassword("password123"),
+      emailVerifiedAt: new Date(),
       licenseNumber: "NSW-DL-9002",
       vehiclePlate: "TG-202",
       vehicleYear: 2020,
@@ -141,6 +150,7 @@ async function seedDrivers() {
       email: "liam.driver@truckgo.test",
       phone: "+61 411 200 203",
       passwordHash: hashPassword("password123"),
+      emailVerifiedAt: new Date(),
       licenseNumber: "NSW-DL-9003",
       vehiclePlate: "TG-303",
       vehicleYear: 2022,
@@ -150,6 +160,10 @@ async function seedDrivers() {
       totalTrips: 74,
     },
   ]).onConflictDoNothing({ target: driversTable.email });
+
+  await db.update(driversTable).set({ emailVerifiedAt: new Date() }).where(eq(driversTable.email, "jack.driver@truckgo.test"));
+  await db.update(driversTable).set({ emailVerifiedAt: new Date() }).where(eq(driversTable.email, "sophia.driver@truckgo.test"));
+  await db.update(driversTable).set({ emailVerifiedAt: new Date() }).where(eq(driversTable.email, "liam.driver@truckgo.test"));
 }
 
 async function seedBookings() {

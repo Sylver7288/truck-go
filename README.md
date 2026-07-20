@@ -43,7 +43,9 @@ Required environment variables:
 - `PORT` - API/dev server port, commonly `5000`.
 - `BASE_PATH` - Vite base path, usually `/`.
 - `VITE_API_PROXY_TARGET` - API server target for local web/admin requests, usually `http://localhost:5001`.
-- `VITE_ADMIN_EMAIL` and `VITE_ADMIN_PASSWORD` - demo admin panel credentials for the web app.
+- `ADMIN_EMAIL`, `ADMIN_PASSWORD`, and `ADMIN_SESSION_SECRET` - backend-protected admin panel credentials/session signing.
+- `APP_BASE_URL` - public web app base URL used in email verification links.
+- `RESEND_API_KEY` and `EMAIL_FROM` - Resend transactional email settings for email verification. Without `RESEND_API_KEY`, local dev logs verification links instead of sending email.
 - `EXPO_PUBLIC_DOMAIN` - public API/deployment host used by the driver app.
 
 ## Common Commands
@@ -87,5 +89,6 @@ corepack pnpm -r --if-present run build
 ## Security Notes
 
 - Do not commit `.env` files or production secrets.
-- Admin credentials are read from `VITE_ADMIN_EMAIL` and `VITE_ADMIN_PASSWORD` and are intended for demo/admin-gate usage only.
+- Admin API routes are protected by an HTTP-only backend session cookie issued from `ADMIN_EMAIL`/`ADMIN_PASSWORD`.
+- Customer and driver accounts require email verification before login. Verification emails are sent through Resend when `RESEND_API_KEY` is configured.
 - The API currently uses simple SHA-256 password hashing in the scaffold. Replace it with a password hashing algorithm such as Argon2 or bcrypt before production use.

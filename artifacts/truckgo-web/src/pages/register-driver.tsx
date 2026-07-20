@@ -1,6 +1,5 @@
 import { useState, useRef } from "react";
-import { useLocation, Link } from "wouter";
-import { useAuth } from "@/hooks/use-auth";
+import { Link } from "wouter";
 import { useRegisterDriver, useListTruckTypes } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,8 +10,6 @@ import { Truck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function RegisterDriver() {
-  const { login } = useAuth();
-  const [, setLocation] = useLocation();
   const { toast } = useToast();
   
   const [name, setName] = useState("");
@@ -23,6 +20,7 @@ export default function RegisterDriver() {
   const [vehiclePlate, setVehiclePlate] = useState("");
   const [vehicleYear, setVehicleYear] = useState("");
   const [truckTypeId, setTruckTypeId] = useState("");
+  const [registeredEmail, setRegisteredEmail] = useState("");
 
   const { data: truckTypes } = useListTruckTypes();
   const registerMutation = useRegisterDriver();
@@ -51,9 +49,8 @@ export default function RegisterDriver() {
       },
       {
         onSuccess: (data) => {
-          login({ userId: data.userId, role: data.role, name: data.name, email: data.email });
-          setLocation("/driver");
-          toast({ title: "Driver Account created!", description: `Welcome to TruckGo, ${data.name}` });
+          setRegisteredEmail(data.email);
+          toast({ title: "Driver account created", description: "Check your email to verify your account before logging in." });
         },
         onError: () => {
           toast({ title: "Registration failed", description: "Please try again", variant: "destructive" });
@@ -78,6 +75,11 @@ export default function RegisterDriver() {
             <CardDescription>Join the network and start earning</CardDescription>
           </CardHeader>
           <CardContent>
+            {registeredEmail ? (
+              <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-5 text-sm text-emerald-900">
+                We sent a verification link to <span className="font-semibold">{registeredEmail}</span>. Verify your email, then log in.
+              </div>
+            ) : (
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
@@ -134,6 +136,7 @@ export default function RegisterDriver() {
                 {registerMutation.isPending ? "Creating account..." : "Apply to Drive"}
               </Button>
             </form>
+            )}
           </CardContent>
           <CardFooter className="flex flex-col gap-4 text-center">
             <div className="text-sm text-muted-foreground">

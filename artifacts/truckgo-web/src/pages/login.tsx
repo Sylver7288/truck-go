@@ -42,8 +42,9 @@ export default function Login() {
           }
           toast({ title: "Welcome back!", description: `Logged in as ${data.name}` });
         },
-        onError: () => {
-          toast({ title: "Login failed", description: "Invalid email or password", variant: "destructive" });
+        onError: async (error) => {
+          const message = error instanceof Error ? error.message : "Invalid email or password";
+          toast({ title: "Login failed", description: message.includes("verify") ? "Please verify your email before logging in." : "Invalid email or password", variant: "destructive" });
         }
       }
     );
