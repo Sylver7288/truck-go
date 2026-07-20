@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
 import { contactMessages } from "@workspace/db/schema";
-import { desc } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 
 const router = Router();
 
@@ -34,6 +34,33 @@ router.get("/admin/contact", async (_req, res) => {
     .orderBy(desc(contactMessages.createdAt))
     .limit(100);
   return res.json(rows);
+});
+
+// PATCH /admin/contact/:id — update contact message workflow status
+router.patch("/admin/contact/:id", async (req, res) => {
+  const id = Number(req.params.id);
+  const { status } = req.body as { status?: string };
+  const allowedStatuses = new Set(["new", "in_review", "resolved", "archived"]);
+
+  if (!Number.isInteger(id) || id <= 0) {
+    return res.status(400).json({ error: "Invalid message id." });
+  }
+
+  if (!status || !allowedStatuses.has(status)) {
+    return res.status(400).json({ error: "Invalid message status." });
+  }
+
+  const [row] = await db
+    .update(contactMessages)
+    .set({ status })
+    .where(eq(contactMessages.id, id))
+    .returning();
+
+  if (!row) {
+    return res.status(404).json({ error: "Message not found." });
+  }
+
+  return res.json(row);
 });
 
 export default router;

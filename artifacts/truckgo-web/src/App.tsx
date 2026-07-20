@@ -30,6 +30,7 @@ import AdminDashboard from '@/pages/admin/dashboard';
 import AdminBookings from '@/pages/admin/bookings';
 import AdminDrivers from '@/pages/admin/drivers';
 import AdminCustomers from '@/pages/admin/customers';
+import AdminMessages from '@/pages/admin/messages';
 import { useAdminAuth } from '@/hooks/use-admin-auth';
 
 const queryClient = new QueryClient({
@@ -58,6 +59,7 @@ function Router() {
         <Route path="/admin/bookings"><AdminRoute component={AdminBookings} /></Route>
         <Route path="/admin/drivers"><AdminRoute component={AdminDrivers} /></Route>
         <Route path="/admin/customers"><AdminRoute component={AdminCustomers} /></Route>
+        <Route path="/admin/messages"><AdminRoute component={AdminMessages} /></Route>
         <Route path="/admin"><AdminRoute component={AdminDashboard} /></Route>
         <Route component={NotFound} />
       </Switch>

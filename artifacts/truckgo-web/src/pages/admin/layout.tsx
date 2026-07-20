@@ -5,6 +5,7 @@ import {
   ClipboardList,
   Truck,
   Users,
+  MessageSquare,
   LogOut,
   ShieldCheck,
   Menu,
@@ -18,6 +19,7 @@ const NAV_ITEMS = [
   { href: "/admin/bookings", label: "Bookings", icon: ClipboardList },
   { href: "/admin/drivers", label: "Drivers", icon: Truck },
   { href: "/admin/customers", label: "Customers", icon: Users },
+  { href: "/admin/messages", label: "Messages", icon: MessageSquare },
 ];
 
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
