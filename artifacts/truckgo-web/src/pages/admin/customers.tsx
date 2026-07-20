@@ -10,7 +10,9 @@ export default function AdminCustomers() {
   const [search, setSearch] = useState("");
   const { data: customers, isLoading } = useListAdminCustomers();
 
-  const filtered = (customers ?? []).filter((c) => {
+  const customerRows = Array.isArray(customers) ? customers : [];
+
+  const filtered = customerRows.filter((c) => {
     const q = search.toLowerCase();
     return (
       !q ||

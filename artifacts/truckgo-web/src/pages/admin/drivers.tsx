@@ -28,7 +28,9 @@ export default function AdminDrivers() {
 
   const { data: drivers, isLoading } = useListAdminDrivers();
 
-  const filtered = (drivers ?? []).filter((d) => {
+  const driverRows = Array.isArray(drivers) ? drivers : [];
+
+  const filtered = driverRows.filter((d) => {
     const matchStatus = statusFilter === "all" || d.status === statusFilter;
     const q = search.toLowerCase();
     const matchSearch =

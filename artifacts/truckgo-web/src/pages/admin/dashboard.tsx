@@ -60,10 +60,11 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 export default function AdminDashboard() {
-  const { data: stats, isLoading: statsLoading } = useGetAdminStats();
+  const { data: rawStats, isLoading: statsLoading } = useGetAdminStats();
   const { data: bookings, isLoading: bookingsLoading } = useListAdminBookings();
 
-  const recentBookings = bookings?.slice(0, 8) ?? [];
+  const stats = rawStats && typeof rawStats === "object" ? rawStats : null;
+  const recentBookings = Array.isArray(bookings) ? bookings.slice(0, 8) : [];
 
   return (
     <AdminLayout>

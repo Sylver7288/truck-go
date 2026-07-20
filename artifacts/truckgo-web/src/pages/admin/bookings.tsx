@@ -33,7 +33,9 @@ export default function AdminBookings() {
 
   const { data: bookings, isLoading } = useListAdminBookings();
 
-  const filtered = (bookings ?? []).filter((b) => {
+  const bookingRows = Array.isArray(bookings) ? bookings : [];
+
+  const filtered = bookingRows.filter((b) => {
     const matchStatus = statusFilter === "all" || b.status === statusFilter;
     const q = search.toLowerCase();
     const matchSearch = !q || 
